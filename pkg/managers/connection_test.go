@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	openclaw "github.com/i0r3k/openclaw-sdk-go/pkg/openclaw"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
 func TestConnectionManager_State(t *testing.T) {
@@ -14,7 +14,7 @@ func TestConnectionManager_State(t *testing.T) {
 	cm := NewConnectionManager(ctx, config, em)
 
 	state := cm.State()
-	if state != openclaw.StateDisconnected {
+	if state != types.StateDisconnected {
 		t.Errorf("expected disconnected, got %s", state)
 	}
 

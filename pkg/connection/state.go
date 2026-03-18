@@ -5,26 +5,26 @@ import (
 	"fmt"
 	"sync"
 
-	openclaw "github.com/i0r3k/openclaw-sdk-go/pkg/openclaw"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
 // StateChangeEvent represents a state change event
 type StateChangeEvent struct {
-	From   openclaw.ConnectionState
-	To     openclaw.ConnectionState
+	From   types.ConnectionState
+	To     types.ConnectionState
 	Reason error
 }
 
 // ConnectionStateMachine manages connection state
 type ConnectionStateMachine struct {
-	state  openclaw.ConnectionState
+	state  types.ConnectionState
 	mu     sync.RWMutex
 	events chan StateChangeEvent
 	ctx    interface{} // context.Context - added for future cancellation support
 }
 
 // NewConnectionStateMachine creates a new state machine
-func NewConnectionStateMachine(initial openclaw.ConnectionState) *ConnectionStateMachine {
+func NewConnectionStateMachine(initial types.ConnectionState) *ConnectionStateMachine {
 	return &ConnectionStateMachine{
 		state:  initial,
 		events: make(chan StateChangeEvent, 10),
@@ -32,17 +32,17 @@ func NewConnectionStateMachine(initial openclaw.ConnectionState) *ConnectionStat
 }
 
 // validTransitions defines valid state transitions using typed constants
-var validTransitions = map[openclaw.ConnectionState][]openclaw.ConnectionState{
-	openclaw.StateDisconnected:     {openclaw.StateConnecting},
-	openclaw.StateConnecting:       {openclaw.StateConnected, openclaw.StateDisconnected, openclaw.StateFailed},
-	openclaw.StateConnected:        {openclaw.StateAuthenticating, openclaw.StateDisconnected, openclaw.StateReconnecting, openclaw.StateFailed},
-	openclaw.StateAuthenticating:   {openclaw.StateAuthenticated, openclaw.StateFailed},
-	openclaw.StateAuthenticated:    {openclaw.StateDisconnected, openclaw.StateReconnecting},
-	openclaw.StateReconnecting:    {openclaw.StateConnecting, openclaw.StateFailed},
-	openclaw.StateFailed:           {openclaw.StateDisconnected},
+var validTransitions = map[types.ConnectionState][]types.ConnectionState{
+	types.StateDisconnected:     {types.StateConnecting},
+	types.StateConnecting:       {types.StateConnected, types.StateDisconnected, types.StateFailed},
+	types.StateConnected:        {types.StateAuthenticating, types.StateDisconnected, types.StateReconnecting, types.StateFailed},
+	types.StateAuthenticating:   {types.StateAuthenticated, types.StateFailed},
+	types.StateAuthenticated:    {types.StateDisconnected, types.StateReconnecting},
+	types.StateReconnecting:    {types.StateConnecting, types.StateFailed},
+	types.StateFailed:           {types.StateDisconnected},
 }
 
-func (csm *ConnectionStateMachine) validTransition(from, to openclaw.ConnectionState) bool {
+func (csm *ConnectionStateMachine) validTransition(from, to types.ConnectionState) bool {
 	allowed, ok := validTransitions[from]
 	if !ok {
 		return false
@@ -56,7 +56,7 @@ func (csm *ConnectionStateMachine) validTransition(from, to openclaw.ConnectionS
 }
 
 // Transition changes the state
-func (csm *ConnectionStateMachine) Transition(to openclaw.ConnectionState, reason error) error {
+func (csm *ConnectionStateMachine) Transition(to types.ConnectionState, reason error) error {
 	csm.mu.Lock()
 	from := csm.state
 	if !csm.validTransition(from, to) {
@@ -76,7 +76,7 @@ func (csm *ConnectionStateMachine) Transition(to openclaw.ConnectionState, reaso
 }
 
 // State returns the current state
-func (csm *ConnectionStateMachine) State() openclaw.ConnectionState {
+func (csm *ConnectionStateMachine) State() types.ConnectionState {
 	csm.mu.RLock()
 	defer csm.mu.RUnlock()
 	return csm.state

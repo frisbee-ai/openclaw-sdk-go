@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	openclaw "github.com/i0r3k/openclaw-sdk-go/pkg/openclaw"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
 func TestEventManager_Subscribe(t *testing.T) {
@@ -16,14 +16,14 @@ func TestEventManager_Subscribe(t *testing.T) {
 	var mu sync.Mutex
 	handlerCalled := false
 
-	em.Subscribe(openclaw.EventConnect, func(e openclaw.Event) {
+	em.Subscribe(types.EventConnect, func(e types.Event) {
 		mu.Lock()
 		handlerCalled = true
 		mu.Unlock()
 	})
 
 	em.Start()
-	em.Emit(openclaw.Event{Type: openclaw.EventConnect, Timestamp: time.Now()})
+	em.Emit(types.Event{Type: types.EventConnect, Timestamp: time.Now()})
 
 	// Use proper synchronization instead of time.Sleep
 	timeout := time.After(100 * time.Millisecond)
@@ -53,12 +53,12 @@ func TestEventManager_Unsubscribe(t *testing.T) {
 	ctx := context.Background()
 	em := NewEventManager(ctx, 10)
 
-	handler := func(e openclaw.Event) {}
-	unsubscribe := em.Subscribe(openclaw.EventConnect, handler)
+	handler := func(e types.Event) {}
+	unsubscribe := em.Subscribe(types.EventConnect, handler)
 	unsubscribe()
 
 	em.Start()
-	em.Emit(openclaw.Event{Type: openclaw.EventConnect, Timestamp: time.Now()})
+	em.Emit(types.Event{Type: types.EventConnect, Timestamp: time.Now()})
 	time.Sleep(20 * time.Millisecond)
 
 	em.Close()

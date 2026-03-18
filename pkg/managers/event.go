@@ -6,13 +6,13 @@ import (
 	"sync"
 	"unsafe"
 
-	openclaw "github.com/i0r3k/openclaw-sdk-go/pkg/openclaw"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
 // EventManager manages event subscriptions and dispatching
 type EventManager struct {
-	events   chan openclaw.Event
-	handlers map[openclaw.EventType]map[uintptr]openclaw.EventHandler
+	events   chan types.Event
+	handlers map[types.EventType]map[uintptr]types.EventHandler
 	ctx      context.Context
 	cancel   context.CancelFunc
 	mu       sync.RWMutex
@@ -23,20 +23,20 @@ type EventManager struct {
 func NewEventManager(ctx context.Context, bufferSize int) *EventManager {
 	ctx, cancel := context.WithCancel(ctx)
 	return &EventManager{
-		events:   make(chan openclaw.Event, bufferSize),
-		handlers: make(map[openclaw.EventType]map[uintptr]openclaw.EventHandler),
+		events:   make(chan types.Event, bufferSize),
+		handlers: make(map[types.EventType]map[uintptr]types.EventHandler),
 		ctx:      ctx,
 		cancel:   cancel,
 	}
 }
 
 // Subscribe adds an event handler
-func (em *EventManager) Subscribe(eventType openclaw.EventType, handler openclaw.EventHandler) func() {
+func (em *EventManager) Subscribe(eventType types.EventType, handler types.EventHandler) func() {
 	em.mu.Lock()
 	defer em.mu.Unlock()
 
 	if em.handlers[eventType] == nil {
-		em.handlers[eventType] = make(map[uintptr]openclaw.EventHandler)
+		em.handlers[eventType] = make(map[uintptr]types.EventHandler)
 	}
 
 	// Use pointer address as key - handlers are functions which have addresses
@@ -53,7 +53,7 @@ func (em *EventManager) Subscribe(eventType openclaw.EventType, handler openclaw
 }
 
 // Unsubscribe removes an event handler by key
-func (em *EventManager) Unsubscribe(eventType openclaw.EventType, key uintptr) {
+func (em *EventManager) Unsubscribe(eventType types.EventType, key uintptr) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
 	if em.handlers[eventType] != nil {
@@ -62,12 +62,12 @@ func (em *EventManager) Unsubscribe(eventType openclaw.EventType, key uintptr) {
 }
 
 // Events returns the event channel
-func (em *EventManager) Events() <-chan openclaw.Event {
+func (em *EventManager) Events() <-chan types.Event {
 	return em.events
 }
 
 // Emit emits an event
-func (em *EventManager) Emit(event openclaw.Event) {
+func (em *EventManager) Emit(event types.Event) {
 	select {
 	case em.events <- event:
 	case <-em.ctx.Done():
@@ -91,7 +91,7 @@ func (em *EventManager) Start() {
 }
 
 // dispatch sends event to all registered handlers
-func (em *EventManager) dispatch(event openclaw.Event) {
+func (em *EventManager) dispatch(event types.Event) {
 	em.mu.RLock()
 	handlerMap := em.handlers[event.Type]
 	em.mu.RUnlock()

@@ -1,69 +1,44 @@
 package openclaw
 
-import "time"
+import "github.com/i0r3k/openclaw-sdk-go/pkg/types"
 
-// ConnectionState represents the state of the connection
-type ConnectionState string
+// Re-export shared types from pkg/types for convenience
+type ConnectionState = types.ConnectionState
+type EventType = types.EventType
+type Event = types.Event
+type EventHandler = types.EventHandler
+type ReconnectConfig = types.ReconnectConfig
 
+// Re-export constants
 const (
-	StateDisconnected      ConnectionState = "disconnected"
-	StateConnecting        ConnectionState = "connecting"
-	StateConnected         ConnectionState = "connected"
-	StateAuthenticating    ConnectionState = "authenticating"
-	StateAuthenticated     ConnectionState = "authenticated"
-	StateReconnecting      ConnectionState = "reconnecting"
-	StateFailed            ConnectionState = "failed"
+	StateDisconnected      = types.StateDisconnected
+	StateConnecting        = types.StateConnecting
+	StateConnected         = types.StateConnected
+	StateAuthenticating    = types.StateAuthenticating
+	StateAuthenticated     = types.StateAuthenticated
+	StateReconnecting      = types.StateReconnecting
+	StateFailed            = types.StateFailed
+
+	EventConnect      = types.EventConnect
+	EventDisconnect   = types.EventDisconnect
+	EventError        = types.EventError
+	EventMessage      = types.EventMessage
+	EventRequest      = types.EventRequest
+	EventResponse     = types.EventResponse
+	EventTick         = types.EventTick
+	EventGap          = types.EventGap
+	EventStateChange  = types.EventStateChange
 )
-
-// EventType represents the type of event
-type EventType string
-
-const (
-	EventConnect      EventType = "connect"
-	EventDisconnect   EventType = "disconnect"
-	EventError        EventType = "error"
-	EventMessage      EventType = "message"
-	EventRequest      EventType = "request"
-	EventResponse     EventType = "response"
-	EventTick         EventType = "tick"
-	EventGap          EventType = "gap"
-	EventStateChange  EventType = "stateChange"
-)
-
-// Event represents a generic event
-type Event struct {
-	Type      EventType
-	Payload   interface{}
-	Err       error
-	Timestamp time.Time
-}
-
-// EventHandler is a function that handles events
-type EventHandler func(Event)
-
-// ReconnectConfig holds reconnection settings
-type ReconnectConfig struct {
-	MaxAttempts       int
-	InitialDelay     time.Duration
-	MaxDelay         time.Duration
-	BackoffMultiplier float64
-}
 
 // DefaultReconnectConfig returns sensible defaults
-// Note: InitialDelay must be <= MaxDelay for valid backoff
 func DefaultReconnectConfig() ReconnectConfig {
-	return ReconnectConfig{
-		MaxAttempts:       0, // 0 = infinite
-		InitialDelay:     1 * time.Second,
-		MaxDelay:         60 * time.Second,
-		BackoffMultiplier: 1.618,
-	}
+	return types.DefaultReconnectConfig()
 }
 
-// Validate validates the reconnect configuration
-func (r ReconnectConfig) Validate() error {
+// ValidateReconnectConfig validates the reconnect configuration
+func ValidateReconnectConfig(r ReconnectConfig) error {
 	if r.InitialDelay > r.MaxDelay {
-		return &ValidationError{&BaseError{ErrCodeValidation, "InitialDelay must be <= MaxDelay", nil}}
+		return types.NewValidationError("InitialDelay must be <= MaxDelay", nil)
 	}
 	return nil
 }

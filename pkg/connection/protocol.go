@@ -1,4 +1,4 @@
-// pkg/openclaw/connection/protocol.go
+// pkg/connection/protocol.go
 package connection
 
 import (
@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	openclaw "github.com/i0r3k/openclaw-sdk-go/pkg/openclaw"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
 // ProtocolNegotiator handles protocol version negotiation
@@ -35,7 +35,7 @@ func (p *ProtocolNegotiator) Negotiate(ctx context.Context, serverVersions []str
 	for {
 		select {
 		case <-ctx.Done():
-			return "", openclaw.NewProtocolError("protocol negotiation timeout", ctx.Err())
+			return "", types.NewProtocolError("protocol negotiation timeout", ctx.Err())
 		default:
 			// Check for matching versions
 			for _, clientVer := range p.supportedVersions {
@@ -46,7 +46,7 @@ func (p *ProtocolNegotiator) Negotiate(ctx context.Context, serverVersions []str
 				}
 			}
 			// No match found
-			return "", openclaw.NewProtocolError("no matching protocol version", nil)
+			return "", types.NewProtocolError("no matching protocol version", nil)
 		}
 	}
 }

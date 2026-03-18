@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	openclaw "github.com/i0r3k/openclaw-sdk-go/pkg/openclaw"
-	"github.com/i0r3k/openclaw-sdk-go/pkg/openclaw/connection"
-	"github.com/i0r3k/openclaw-sdk-go/pkg/openclaw/transport"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/connection"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/transport"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
 // ClientConfig holds client configuration
@@ -22,7 +22,7 @@ type ClientConfig struct {
 func NewConnectionManager(ctx context.Context, config *ClientConfig, eventMgr *EventManager) *ConnectionManager {
 	return &ConnectionManager{
 		config:   config,
-		state:    connection.NewConnectionStateMachine(openclaw.StateDisconnected),
+		state:    connection.NewConnectionStateMachine(types.StateDisconnected),
 		eventMgr: eventMgr,
 		ctx:      ctx,
 	}
@@ -45,10 +45,10 @@ func (cm *ConnectionManager) Connect(ctx context.Context) error {
 	defer cm.mu.Unlock()
 
 	if cm.transport != nil && cm.transport.IsConnected() {
-		return openclaw.NewConnectionError("already connected", nil)
+		return types.NewConnectionError("already connected", nil)
 	}
 
-	if err := cm.state.Transition(openclaw.StateConnecting, nil); err != nil {
+	if err := cm.state.Transition(types.StateConnecting, nil); err != nil {
 		return err
 	}
 
@@ -61,20 +61,20 @@ func (cm *ConnectionManager) Connect(ctx context.Context) error {
 
 	t, err := transport.Dial(cm.config.URL, header, nil)
 	if err != nil {
-		cm.state.Transition(openclaw.StateFailed, err)
+		cm.state.Transition(types.StateFailed, err)
 		return err
 	}
 
 	cm.transport = t
 	t.Start()
 
-	if err := cm.state.Transition(openclaw.StateConnected, nil); err != nil {
+	if err := cm.state.Transition(types.StateConnected, nil); err != nil {
 		return err
 	}
 
 	if cm.eventMgr != nil {
-		cm.eventMgr.Emit(openclaw.Event{
-			Type:      openclaw.EventConnect,
+		cm.eventMgr.Emit(types.Event{
+			Type:      types.EventConnect,
 			Timestamp: time.Now(),
 		})
 	}
@@ -93,11 +93,11 @@ func (cm *ConnectionManager) Disconnect() error {
 
 	err := cm.transport.Close()
 	cm.transport = nil
-	cm.state.Transition(openclaw.StateDisconnected, nil)
+	cm.state.Transition(types.StateDisconnected, nil)
 
 	if cm.eventMgr != nil {
-		cm.eventMgr.Emit(openclaw.Event{
-			Type:      openclaw.EventDisconnect,
+		cm.eventMgr.Emit(types.Event{
+			Type:      types.EventDisconnect,
 			Timestamp: time.Now(),
 		})
 	}
@@ -106,11 +106,11 @@ func (cm *ConnectionManager) Disconnect() error {
 }
 
 // State returns the current connection state
-func (cm *ConnectionManager) State() openclaw.ConnectionState {
+func (cm *ConnectionManager) State() types.ConnectionState {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	if cm.state == nil {
-		return openclaw.StateDisconnected
+		return types.StateDisconnected
 	}
 	return cm.state.State()
 }

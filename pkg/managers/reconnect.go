@@ -6,16 +6,16 @@ import (
 	"sync"
 	"time"
 
-	openclaw "github.com/i0r3k/openclaw-sdk-go/pkg/openclaw"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
 // ReconnectConfig holds reconnection configuration
-// Uses openclaw.ReconnectConfig from Phase 1
-type ReconnectConfig = openclaw.ReconnectConfig
+// Uses types.ReconnectConfig
+type ReconnectConfig = types.ReconnectConfig
 
 // DefaultReconnectConfig returns default configuration
 func DefaultReconnectConfig() *ReconnectConfig {
-	cfg := openclaw.DefaultReconnectConfig()
+	cfg := types.DefaultReconnectConfig()
 	return &cfg
 }
 

@@ -1,4 +1,4 @@
-// pkg/openclaw/connection/tls.go
+// pkg/connection/tls.go
 package connection
 
 import (
@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	openclaw "github.com/i0r3k/openclaw-sdk-go/pkg/openclaw"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
 // TlsValidator validates TLS certificates
@@ -50,21 +50,21 @@ func (v *TlsValidator) Validate() error {
 	// If using custom CA, verify it exists
 	if v.config.CAFile != "" {
 		if _, err := os.Stat(v.config.CAFile); os.IsNotExist(err) {
-			return openclaw.NewValidationError("TLS CA file does not exist", ErrCANotFound)
+			return types.NewValidationError("TLS CA file does not exist", ErrCANotFound)
 		}
 	}
 
 	// If using client cert, both cert and key must be present
 	if v.config.CertFile != "" || v.config.KeyFile != "" {
 		if v.config.CertFile == "" || v.config.KeyFile == "" {
-			return openclaw.NewValidationError("both CertFile and KeyFile are required for client authentication", ErrInvalidTLSConfig)
+			return types.NewValidationError("both CertFile and KeyFile are required for client authentication", ErrInvalidTLSConfig)
 		}
 		// Verify both files exist
 		if _, err := os.Stat(v.config.CertFile); os.IsNotExist(err) {
-			return openclaw.NewValidationError("TLS certificate file does not exist", ErrCertNotFound)
+			return types.NewValidationError("TLS certificate file does not exist", ErrCertNotFound)
 		}
 		if _, err := os.Stat(v.config.KeyFile); os.IsNotExist(err) {
-			return openclaw.NewValidationError("TLS key file does not exist", ErrCertNotFound)
+			return types.NewValidationError("TLS key file does not exist", ErrCertNotFound)
 		}
 	}
 
@@ -92,7 +92,7 @@ func (v *TlsValidator) GetTLSConfig() (*tls.Config, error) {
 	if v.config.CertFile != "" && v.config.KeyFile != "" {
 		cert, err := tls.LoadX509KeyPair(v.config.CertFile, v.config.KeyFile)
 		if err != nil {
-			return nil, openclaw.NewTransportError("failed to load client certificate", err)
+			return nil, types.NewTransportError("failed to load client certificate", err)
 		}
 		config.Certificates = []tls.Certificate{cert}
 	}
@@ -101,7 +101,7 @@ func (v *TlsValidator) GetTLSConfig() (*tls.Config, error) {
 	if v.config.CAFile != "" {
 		caCert, err := os.ReadFile(v.config.CAFile)
 		if err != nil {
-			return nil, openclaw.NewTransportError("failed to read CA certificate", err)
+			return nil, types.NewTransportError("failed to read CA certificate", err)
 		}
 		caPool := x509.NewCertPool()
 		caPool.AppendCertsFromPEM(caCert)

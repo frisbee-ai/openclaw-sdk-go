@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/i0r3k/openclaw-sdk-go/pkg/openclaw/protocol"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/protocol"
 )
 
 // RequestManager manages pending requests

@@ -3,23 +3,23 @@ package managers
 import (
 	"context"
 
-	openclaw "github.com/i0r3k/openclaw-sdk-go/pkg/openclaw"
-	"github.com/i0r3k/openclaw-sdk-go/pkg/openclaw/protocol"
-	"github.com/i0r3k/openclaw-sdk-go/pkg/openclaw/transport"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/protocol"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/transport"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
 // EventEmitter is the interface for event emission
 type EventEmitter interface {
-	Emit(event openclaw.Event)
-	Events() <-chan openclaw.Event
+	Emit(event types.Event)
+	Events() <-chan types.Event
 }
 
 // EventManagerInterface defines the interface for event management
 type EventManagerInterface interface {
-	Subscribe(eventType openclaw.EventType, handler openclaw.EventHandler) func()
-	Unsubscribe(eventType openclaw.EventType, handler openclaw.EventHandler)
-	Events() <-chan openclaw.Event
-	Emit(event openclaw.Event)
+	Subscribe(eventType types.EventType, handler types.EventHandler) func()
+	Unsubscribe(eventType types.EventType, handler types.EventHandler)
+	Events() <-chan types.Event
+	Emit(event types.Event)
 	Start()
 	Close() error
 }
@@ -35,7 +35,7 @@ type RequestManagerInterface interface {
 type ConnectionManagerInterface interface {
 	Connect(ctx context.Context) error
 	Disconnect() error
-	State() openclaw.ConnectionState
+	State() types.ConnectionState
 	Transport() transport.Transport
 	Close() error
 }

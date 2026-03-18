@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/i0r3k/openclaw-sdk-go/pkg/openclaw/protocol"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/protocol"
 )
 
 func TestRequestManager_SendAndReceive(t *testing.T) {
