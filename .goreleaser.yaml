@@ -1,0 +1,138 @@
+# GoReleaser configuration for openclaw-sdk-go
+# This is a library project, so the focus is on Go module distribution
+# rather than binary distribution.
+
+version: 2
+
+project_name: openclaw-sdk-go
+
+# Release configuration
+release:
+  github:
+    owner: i0r3k
+    name: openclaw-sdk-go
+  draft: true
+  mode: replace
+  header: |
+    ## What's Changed
+  footer: |
+    **Full Changelog**: https://github.com/i0r3k/openclaw-sdk-go/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+# Build example binaries (optional, for user convenience)
+builds:
+  # CLI example
+  - id: cli-example
+    main: ./examples/cmd/main.go
+    binary: cli-example
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    goamd64:
+      - v1
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+    no_unique_dist_dir: true
+
+  # Echo server example
+  - id: echo-server
+    main: ./examples/server/main.go
+    binary: echo-server
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    goamd64:
+      - v1
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+    no_unique_dist_dir: true
+
+# Archive configuration
+archives:
+  - name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats:
+      - tar.gz
+      - zip
+    files:
+      - README.md
+      - LICENSE
+      - examples/*
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+# Checksums
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+# Go module verification (critical for library projects)
+gomod:
+  proxy: true
+  mod: mod
+
+# Snapshots (for testing)
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+# Changelog
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+      - '^style:'
+      - '^refactor:'
+      - Merge pull request
+      - Merge branch
+
+# Source distribution
+source:
+  enabled: true
+  name_template: '{{ .ProjectName }}-{{ .Version }}-source'
+
+# Before hooks
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+    - go test ./...
+
+# Announcement (optional)
+announce:
+  discord:
+    enabled: false
+  mastodon:
+    enabled: false
+  reddit:
+    enabled: false
+  slack:
+    enabled: false
+  smtp:
+    enabled: false
+  teams:
+    enabled: false
+  telegram:
+    enabled: false
+  twitter:
+    enabled: false
+
+# Nightly releases (optional - requires separate configuration)
+# nightly:
+#   publish_release: false
