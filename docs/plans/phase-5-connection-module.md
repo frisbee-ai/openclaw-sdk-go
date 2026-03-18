@@ -1,10 +1,12 @@
 # Phase 5: Connection Module
 
 **Files:**
-- Create: `connection/state.go`, `connection/state_test.go`
-- Create: `connection/protocol.go`, `connection/protocol_test.go`
-- Create: `connection/policies.go`, `connection/policies_test.go`
-- Create: `connection/tls.go`, `connection/tls_test.go`
+- Create: `pkg/openclaw/connection/state.go`, `pkg/openclaw/connection/state_test.go`
+- Create: `pkg/openclaw/connection/protocol.go`, `pkg/openclaw/connection/protocol_test.go`
+- Create: `pkg/openclaw/connection/policies.go`, `pkg/openclaw/connection/policies_test.go`
+- Create: `pkg/openclaw/connection/tls.go`, `pkg/openclaw/connection/tls_test.go`
+
+**Project Structure:** Go module in root, source files in `pkg/openclaw/` directory
 
 **Depends on:** Phase 1 (types.go, errors.go), Phase 4 (transport)
 
@@ -15,11 +17,11 @@
 - [ ] **Step 1: Create connection directory and state.go**
 
 ```bash
-mkdir -p connection
+mkdir -p pkg/openclaw/connection
 ```
 
 ```go
-// connection/state.go
+// pkg/openclaw/connection/state.go
 package connection
 
 import (
@@ -112,7 +114,7 @@ func (csm *ConnectionStateMachine) Events() <-chan StateChangeEvent {
 - [ ] **Step 2: Write test**
 
 ```go
-// connection/state_test.go
+// pkg/openclaw/connection/state_test.go
 package connection
 
 import (
@@ -167,8 +169,8 @@ func TestConnectionStateMachine_StateChangeEvent(t *testing.T) {
 
 - [ ] **Step 3: Run tests and commit**
 
-Run: `go test -v ./connection/...`
-Commit: `git add connection/ && git commit -m "feat: add connection state machine"`
+Run: `go test -v ./pkg/openclaw/connection/...`
+Commit: `git add pkg/openclaw/connection/ go.mod && git commit -m "feat: add connection state machine"`
 
 ---
 
@@ -177,7 +179,7 @@ Commit: `git add connection/ && git commit -m "feat: add connection state machin
 - [ ] **Step 1: Write protocol.go**
 
 ```go
-// connection/protocol.go
+// pkg/openclaw/connection/protocol.go
 package connection
 
 import (
@@ -238,7 +240,7 @@ var ErrNoMatchingProtocol = errors.New("no matching protocol version")
 - [ ] **Step 2: Write protocol_test.go**
 
 ```go
-// connection/protocol_test.go
+// pkg/openclaw/connection/protocol_test.go
 package connection
 
 import (
@@ -296,7 +298,7 @@ func TestProtocolNegotiator_DefaultVersions(t *testing.T) {
 - [ ] **Step 3: Commit**
 
 ```bash
-git add connection/protocol.go connection/protocol_test.go
+git add pkg/openclaw/connection/protocol.go pkg/openclaw/connection/protocol_test.go
 git commit -m "feat: add protocol negotiator with context support"
 ```
 
@@ -307,7 +309,7 @@ git commit -m "feat: add protocol negotiator with context support"
 - [ ] **Step 1: Write policies.go**
 
 ```go
-// connection/policies.go
+// pkg/openclaw/connection/policies.go
 package connection
 
 import (
@@ -351,7 +353,7 @@ func (pm *PolicyManager) ShouldReconnect(attemptCount int) bool {
 - [ ] **Step 2: Write policies_test.go**
 
 ```go
-// connection/policies_test.go
+// pkg/openclaw/connection/policies_test.go
 package connection
 
 import (
@@ -400,7 +402,7 @@ func TestPolicyManager_PingInterval(t *testing.T) {
 - [ ] **Step 3: Commit**
 
 ```bash
-git add connection/policies.go connection/policies_test.go
+git add pkg/openclaw/connection/policies.go pkg/openclaw/connection/policies_test.go
 git commit -m "feat: add policy manager with reconnection logic"
 ```
 
@@ -411,7 +413,7 @@ git commit -m "feat: add policy manager with reconnection logic"
 - [ ] **Step 1: Write tls.go**
 
 ```go
-// connection/tls.go
+// pkg/openclaw/connection/tls.go
 package connection
 
 import (
@@ -539,7 +541,7 @@ func ValidateCertificate(cert *x509.Certificate) error {
 - [ ] **Step 2: Write tls_test.go**
 
 ```go
-// connection/tls_test.go
+// pkg/openclaw/connection/tls_test.go
 package connection
 
 import (
@@ -629,7 +631,7 @@ func TestTlsValidator_GetTLSConfig_NoConfig(t *testing.T) {
 - [ ] **Step 3: Commit**
 
 ```bash
-git add connection/tls.go connection/tls_test.go
+git add pkg/openclaw/connection/tls.go pkg/openclaw/connection/tls_test.go
 git commit -m "feat: add TLS validator with certificate validation"
 ```
 
@@ -638,14 +640,14 @@ git commit -m "feat: add TLS validator with certificate validation"
 ## Phase 5 Complete
 
 After this phase, you should have:
-- `connection/state.go` - Connection state machine with typed states
-- `connection/state_test.go` - State machine tests
-- `connection/protocol.go` - Protocol negotiator with context support
-- `connection/protocol_test.go` - Protocol negotiator tests
-- `connection/policies.go` - Policy manager with reconnection logic
-- `connection/policies_test.go` - Policy manager tests
-- `connection/tls.go` - TLS validator with cert validation
-- `connection/tls_test.go` - TLS validator tests
+- `pkg/openclaw/connection/state.go` - Connection state machine with typed states
+- `pkg/openclaw/connection/state_test.go` - State machine tests
+- `pkg/openclaw/connection/protocol.go` - Protocol negotiator with context support
+- `pkg/openclaw/connection/protocol_test.go` - Protocol negotiator tests
+- `pkg/openclaw/connection/policies.go` - Policy manager with reconnection logic
+- `pkg/openclaw/connection/policies_test.go` - Policy manager tests
+- `pkg/openclaw/connection/tls.go` - TLS validator with cert validation
+- `pkg/openclaw/connection/tls_test.go` - TLS validator tests
 
 All code should compile and tests should pass.
 

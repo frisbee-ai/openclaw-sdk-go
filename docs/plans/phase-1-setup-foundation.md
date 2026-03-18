@@ -1,10 +1,12 @@
 # Phase 1: Project Setup and Foundation
 
+**Project Structure:** Go module in root, source files in `pkg/openclaw/` directory
+
 **Files:**
-- Create: `go.mod` (no external deps yet)
-- Create: `types.go`, `types_test.go`
-- Create: `errors.go`, `errors_test.go`
-- Create: `logger.go`, `logger_test.go`
+- Create: `go.mod` (root, no external deps yet)
+- Create: `pkg/openclaw/types.go`, `pkg/openclaw/types_test.go`
+- Create: `pkg/openclaw/errors.go`, `pkg/openclaw/errors_test.go`
+- Create: `pkg/openclaw/logger.go`, `pkg/openclaw/logger_test.go`
 
 ---
 
@@ -13,7 +15,6 @@
 - [ ] **Step 1: Create go.mod**
 
 ```bash
-cd /Users/linyang/workspace/my-projects/openclaw-sdk-go
 go mod init github.com/i0r3k/openclaw-sdk-go
 ```
 
@@ -184,7 +185,7 @@ Run: `go build ./... && go test -v ./...`
 - [ ] **Step 4: Commit**
 
 ```bash
-git add types.go types_test.go
+git add pkg/openclaw/types.go pkg/openclaw/types_test.go
 git commit -m "feat: add common types and constants"
 ```
 
@@ -395,7 +396,7 @@ Run: `go build ./... && go test -v ./...`
 - [ ] **Step 4: Commit**
 
 ```bash
-git add errors.go errors_test.go
+git add pkg/openclaw/errors.go pkg/openclaw/errors_test.go
 git commit -m "feat: add error type hierarchy"
 ```
 
@@ -543,7 +544,7 @@ Run: `go build ./... && go test -v ./...`
 - [ ] **Step 4: Commit**
 
 ```bash
-git add logger.go logger_test.go
+git add pkg/openclaw/logger.go pkg/openclaw/logger_test.go
 git commit -m "feat: add Logger interface with context support"
 ```
 
@@ -552,12 +553,12 @@ git commit -m "feat: add Logger interface with context support"
 ## Phase 1 Complete
 
 After this phase, you should have:
-- `go.mod` - Go module initialized (no external deps yet)
-- `types.go` - Common types and constants
-- `types_test.go` - Types tests
-- `errors.go` - Error type hierarchy
-- `errors_test.go` - Comprehensive error tests
-- `logger.go` - Logger interface with context support
-- `logger_test.go` - Logger tests
+- `pkg/openclaw/go.mod` - Go module initialized (no external deps yet)
+- `pkg/openclaw/types.go` - Common types and constants
+- `pkg/openclaw/types_test.go` - Types tests
+- `pkg/openclaw/errors.go` - Error type hierarchy
+- `pkg/openclaw/errors_test.go` - Comprehensive error tests
+- `pkg/openclaw/logger.go` - Logger interface with context support
+- `pkg/openclaw/logger_test.go` - Logger tests
 
 All code should compile and tests should pass.

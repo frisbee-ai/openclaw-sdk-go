@@ -1,8 +1,10 @@
 # Phase 4: Transport Module
 
 **Files:**
-- Create: `transport/websocket.go`, `transport/websocket_test.go`
+- Create: `pkg/openclaw/transport/websocket.go`, `pkg/openclaw/transport/websocket_test.go`
 - Modify: `go.mod` (add dependency)
+
+**Project Structure:** Go module in root, source files in `pkg/openclaw/` directory
 
 **Depends on:** Phase 1 (types.go, logger.go), Phase 3 (protocol/types.go)
 
@@ -13,14 +15,14 @@
 - [ ] **Step 1: Create transport directory and update go.mod**
 
 ```bash
-mkdir -p transport
+mkdir -p pkg/openclaw/transport
 go get github.com/gorilla/websocket@latest
 ```
 
 - [ ] **Step 2: Write websocket.go with full implementation**
 
 ```go
-// transport/websocket.go
+// pkg/openclaw/transport/websocket.go
 package transport
 
 import (
@@ -310,7 +312,7 @@ type Transport interface {
 - [ ] **Step 3: Write comprehensive tests**
 
 ```go
-// transport/websocket_test.go
+// pkg/openclaw/transport/websocket_test.go
 package transport
 
 import (
@@ -448,8 +450,8 @@ func TestWebSocketTransport_WithMockServer(t *testing.T) {
 
 - [ ] **Step 4: Run tests and commit**
 
-Run: `go build ./transport/... && go test -v ./transport/...`
-Commit: `git add transport/ go.mod && git commit -m "feat: add WebSocket transport with error handling"`
+Run: `go build ./pkg/openclaw/transport/... && go test -v ./pkg/openclaw/transport/...`
+Commit: `git add pkg/openclaw/transport/ go.mod && git commit -m "feat: add WebSocket transport with error handling"`
 
 ---
 
@@ -457,8 +459,8 @@ Commit: `git add transport/ go.mod && git commit -m "feat: add WebSocket transpo
 
 After this phase, you should have:
 - `go.mod` - Updated with gorilla/websocket dependency
-- `transport/websocket.go` - WebSocket transport with full implementation
-- `transport/websocket_test.go` - Comprehensive tests
+- `pkg/openclaw/transport/websocket.go` - WebSocket transport with full implementation
+- `pkg/openclaw/transport/websocket_test.go` - Comprehensive tests
 
 All code should compile and tests should pass.
 

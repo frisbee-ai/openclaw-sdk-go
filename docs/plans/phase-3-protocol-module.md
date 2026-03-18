@@ -1,8 +1,10 @@
 # Phase 3: Protocol Module
 
 **Files:**
-- Create: `protocol/types.go`, `protocol/types_test.go`
-- Create: `protocol/validation.go`, `protocol/validation_test.go`
+- Create: `pkg/openclaw/protocol/types.go`, `pkg/openclaw/protocol/types_test.go`
+- Create: `pkg/openclaw/protocol/validation.go`, `pkg/openclaw/protocol/validation_test.go`
+
+**Project Structure:** Go module in root, source files in `pkg/openclaw/` directory
 
 **Depends on:** Phase 1 (types.go, errors.go)
 
@@ -13,11 +15,11 @@
 - [ ] **Step 1: Create protocol directory and types.go**
 
 ```bash
-mkdir -p protocol
+mkdir -p pkg/openclaw/protocol
 ```
 
 ```go
-// protocol/types.go
+// pkg/openclaw/protocol/types.go
 package protocol
 
 import (
@@ -112,7 +114,7 @@ func NewEventFrame(eventType string) *EventFrame {
 - [ ] **Step 2: Write comprehensive tests**
 
 ```go
-// protocol/types_test.go
+// pkg/openclaw/protocol/types_test.go
 package protocol
 
 import (
@@ -199,8 +201,8 @@ func TestEventFrame(t *testing.T) {
 
 - [ ] **Step 3: Run tests and commit**
 
-Run: `go test -v ./protocol/...`
-Commit: `git add protocol/ && git commit -m "feat: add protocol types with validation"`
+Run: `go test -v ./pkg/openclaw/protocol/...`
+Commit: `git add pkg/openclaw/protocol/ go.mod && git commit -m "feat: add protocol types with validation"`
 
 ---
 
@@ -209,7 +211,7 @@ Commit: `git add protocol/ && git commit -m "feat: add protocol types with valid
 - [ ] **Step 1: Write validation.go**
 
 ```go
-// protocol/validation.go
+// pkg/openclaw/protocol/validation.go
 package protocol
 
 import (
@@ -306,7 +308,7 @@ func (v *Validator) ValidateEventFrame(frame *EventFrame) error {
 - [ ] **Step 2: Write comprehensive tests**
 
 ```go
-// protocol/validation_test.go
+// pkg/openclaw/protocol/validation_test.go
 package protocol
 
 import (
@@ -439,17 +441,17 @@ func TestValidator_ValidateEventFrame(t *testing.T) {
 
 - [ ] **Step 3: Run tests and commit**
 
-Run: `go test -v ./protocol/...`
-Commit: `git add protocol/ && git commit -m "feat: add protocol validation with comprehensive tests"`
+Run: `go test -v ./pkg/openclaw/protocol/...`
+Commit: `git add pkg/openclaw/protocol/ go.mod && git commit -m "feat: add protocol validation with comprehensive tests"`
 
 ---
 
 ## Phase 3 Complete
 
 After this phase, you should have:
-- `protocol/types.go` - Protocol frame types with validation helpers
-- `protocol/types_test.go` - Comprehensive types tests
-- `protocol/validation.go` - Frame validation with all frame types
-- `protocol/validation_test.go` - Comprehensive validation tests
+- `pkg/openclaw/protocol/types.go` - Protocol frame types with validation helpers
+- `pkg/openclaw/protocol/types_test.go` - Comprehensive types tests
+- `pkg/openclaw/protocol/validation.go` - Frame validation with all frame types
+- `pkg/openclaw/protocol/validation_test.go` - Comprehensive validation tests
 
 All code should compile and tests should pass.

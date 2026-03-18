@@ -1,11 +1,13 @@
 # Phase 7: Managers Module
 
 **Files:**
-- Create: `managers/interfaces.go`
-- Create: `managers/event.go`, `managers/event_test.go`
-- Create: `managers/request.go`, `managers/request_test.go`
-- Create: `managers/connection.go`, `managers/connection_test.go`
-- Create: `managers/reconnect.go`, `managers/reconnect_test.go`
+- Create: `pkg/openclaw/managers/interfaces.go`
+- Create: `pkg/openclaw/managers/event.go`, `pkg/openclaw/managers/event_test.go`
+- Create: `pkg/openclaw/managers/request.go`, `pkg/openclaw/managers/request_test.go`
+- Create: `pkg/openclaw/managers/connection.go`, `pkg/openclaw/managers/connection_test.go`
+- Create: `pkg/openclaw/managers/reconnect.go`, `pkg/openclaw/managers/reconnect_test.go`
+
+**Project Structure:** Go module in root, source files in `pkg/openclaw/` directory
 
 **Depends on:** Phase 1 (types.go), Phase 5 (connection), Phase 6 (events), Phase 4 (transport)
 
@@ -16,15 +18,15 @@
 - [ ] **Step 1: Write interfaces.go**
 
 ```go
-// managers/interfaces.go
+// pkg/openclaw/managers/interfaces.go
 package managers
 
 import (
 	"context"
 
 	"openclaw-sdk-go"
-	"github.com/i0r3k/openclaw-sdk-go/protocol"
-	"openclaw-sdk-go/transport"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/openclaw/protocol"
+	"openclaw-sdk-go/pkg/openclaw/transport"
 )
 
 // EventEmitter is the interface for event emission
@@ -75,11 +77,11 @@ type ReconnectManagerInterface interface {
 - [ ] **Step 1: Create managers directory and event.go**
 
 ```bash
-mkdir -p managers
+mkdir -p pkg/openclaw/managers
 ```
 
 ```go
-// managers/event.go
+// pkg/openclaw/managers/event.go
 package managers
 
 import (
@@ -188,7 +190,7 @@ func (em *EventManager) Close() error {
 - [ ] **Step 2: Write test**
 
 ```go
-// managers/event_test.go
+// pkg/openclaw/managers/event_test.go
 package managers
 
 import (
@@ -258,7 +260,7 @@ func TestEventManager_Unsubscribe(t *testing.T) {
 
 - [ ] **Step 3: Run tests**
 
-Run: `go test -v ./managers/... -race`
+Run: `go test -v ./pkg/openclaw/managers/... -race`
 
 ---
 
@@ -267,7 +269,7 @@ Run: `go test -v ./managers/... -race`
 - [ ] **Step 1: Write request.go**
 
 ```go
-// managers/request.go
+// pkg/openclaw/managers/request.go
 package managers
 
 import (
@@ -275,7 +277,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/i0r3k/openclaw-sdk-go/protocol"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/openclaw/protocol"
 )
 
 // RequestManager manages pending requests
@@ -376,7 +378,7 @@ func (rm *RequestManager) Close() error {
 - [ ] **Step 2: Write test**
 
 ```go
-// managers/request_test.go
+// pkg/openclaw/managers/request_test.go
 package managers
 
 import (
@@ -384,7 +386,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/i0r3k/openclaw-sdk-go/protocol"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/openclaw/protocol"
 )
 
 func TestRequestManager_SendAndReceive(t *testing.T) {
@@ -445,7 +447,7 @@ func TestRequestManager_ContextCancellation(t *testing.T) {
 
 - [ ] **Step 3: Run tests**
 
-Run: `go test -v ./managers/... -race`
+Run: `go test -v ./pkg/openclaw/managers/... -race`
 
 ---
 
@@ -454,7 +456,7 @@ Run: `go test -v ./managers/... -race`
 - [ ] **Step 1: Write connection.go**
 
 ```go
-// managers/connection.go
+// pkg/openclaw/managers/connection.go
 package managers
 
 import (
@@ -463,8 +465,8 @@ import (
 	"time"
 
 	"openclaw-sdk-go"
-	"openclaw-sdk-go/connection"
-	"openclaw-sdk-go/transport"
+	"openclaw-sdk-go/pkg/openclaw/connection"
+	"openclaw-sdk-go/pkg/openclaw/transport"
 )
 
 // ClientConfig holds client configuration
@@ -584,7 +586,7 @@ func (cm *ConnectionManager) Close() error {
 - [ ] **Step 2: Write test**
 
 ```go
-// managers/connection_test.go
+// pkg/openclaw/managers/connection_test.go
 package managers
 
 import (
@@ -612,7 +614,7 @@ func TestConnectionManager_State(t *testing.T) {
 
 - [ ] **Step 3: Run tests**
 
-Run: `go test -v ./managers/... -race`
+Run: `go test -v ./pkg/openclaw/managers/... -race`
 
 ---
 
@@ -621,7 +623,7 @@ Run: `go test -v ./managers/... -race`
 - [ ] **Step 1: Write reconnect.go**
 
 ```go
-// managers/reconnect.go
+// pkg/openclaw/managers/reconnect.go
 package managers
 
 import (
@@ -751,7 +753,7 @@ func (rm *ReconnectManager) Reset() {
 - [ ] **Step 2: Write test**
 
 ```go
-// managers/reconnect_test.go
+// pkg/openclaw/managers/reconnect_test.go
 package managers
 
 import (
@@ -810,21 +812,21 @@ func TestReconnectManager_Callbacks(t *testing.T) {
 
 - [ ] **Step 3: Run tests**
 
-Run: `go test -v ./managers/... -race`
+Run: `go test -v ./pkg/openclaw/managers/... -race`
 
 ---
 
 ## Phase 7 Complete
 
 After this phase, you should have:
-- `managers/event.go` - Event manager with thread-safe handlers
-- `managers/event_test.go` - Event manager tests
-- `managers/request.go` - Request manager with timeout support
-- `managers/request_test.go` - Request manager tests
-- `managers/connection.go` - Connection manager
-- `managers/connection_test.go` - Connection manager tests
-- `managers/reconnect.go` - Reconnect manager
-- `managers/reconnect_test.go` - Reconnect manager tests
+- `pkg/openclaw/managers/event.go` - Event manager with thread-safe handlers
+- `pkg/openclaw/managers/event_test.go` - Event manager tests
+- `pkg/openclaw/managers/request.go` - Request manager with timeout support
+- `pkg/openclaw/managers/request_test.go` - Request manager tests
+- `pkg/openclaw/managers/connection.go` - Connection manager
+- `pkg/openclaw/managers/connection_test.go` - Connection manager tests
+- `pkg/openclaw/managers/reconnect.go` - Reconnect manager
+- `pkg/openclaw/managers/reconnect_test.go` - Reconnect manager tests
 
 All code should compile and tests should pass.
 

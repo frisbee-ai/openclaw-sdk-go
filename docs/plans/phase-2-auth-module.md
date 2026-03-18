@@ -1,10 +1,12 @@
 # Phase 2: Authentication Module
 
-**Files:**
-- Create: `auth/provider.go`, `auth/provider_test.go`
-- Create: `auth/handler.go`, `auth/handler_test.go`
+**Project Structure:** Go module in root, source files in `pkg/openclaw/` directory
 
-**Depends on:** Phase 1 (types.go, errors.go)
+**Files:**
+- Create: `pkg/openclaw/auth/provider.go`, `pkg/openclaw/auth/provider_test.go`
+- Create: `pkg/openclaw/auth/handler.go`, `pkg/openclaw/auth/handler_test.go`
+
+**Depends on:** Phase 1 (pkg/openclaw/types.go, pkg/openclaw/errors.go)
 
 ---
 
@@ -13,7 +15,7 @@
 - [ ] **Step 1: Create auth directory and provider.go**
 
 ```bash
-mkdir -p auth
+mkdir -p pkg/openclaw/auth
 ```
 
 ```go
@@ -98,8 +100,8 @@ var _ CredentialsProvider = (*StaticCredentialsProvider)(nil)
 
 - [ ] **Step 3: Run tests and commit**
 
-Run: `go test -v ./auth/...`
-Commit: `git add auth/ && git commit -m "feat: add CredentialsProvider interface with validation"`
+Run: `go test -v ./pkg/openclaw/auth/...`
+Commit: `git add pkg/openclaw/auth/ && git commit -m "feat: add CredentialsProvider interface with validation"`
 
 ---
 
@@ -253,17 +255,17 @@ var _ AuthHandler = (*StaticAuthHandler)(nil)
 
 - [ ] **Step 3: Run tests and commit**
 
-Run: `go test -v ./auth/...`
-Commit: `git add auth/handler.go auth/handler_test.go && git commit -m "feat: add AuthHandler interface with validation"`
+Run: `go test -v ./pkg/openclaw/auth/...`
+Commit: `git add pkg/openclaw/auth/handler.go pkg/openclaw/auth/handler_test.go && git commit -m "feat: add AuthHandler interface with validation"`
 
 ---
 
 ## Phase 2 Complete
 
 After this phase, you should have:
-- `auth/provider.go` - CredentialsProvider interface with validation
-- `auth/provider_test.go` - Comprehensive provider tests
-- `auth/handler.go` - AuthHandler interface with context support
-- `auth/handler_test.go` - Comprehensive handler tests
+- `pkg/openclaw/auth/provider.go` - CredentialsProvider interface with validation
+- `pkg/openclaw/auth/provider_test.go` - Comprehensive provider tests
+- `pkg/openclaw/auth/handler.go` - AuthHandler interface with context support
+- `pkg/openclaw/auth/handler_test.go` - Comprehensive handler tests
 
 All code should compile and tests should pass.

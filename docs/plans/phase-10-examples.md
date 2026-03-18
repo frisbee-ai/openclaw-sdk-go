@@ -4,6 +4,10 @@
 - Create: `examples/cmd/main.go`
 - Create: `examples/server/main.go`
 
+Note: Examples remain in `examples/` directory (not under pkg/openclaw/) as they are standalone applications.
+
+**Project Structure:** Go module in root, source files in `pkg/openclaw/` directory
+
 **Depends on:** Phase 9 (main client)
 
 ---
@@ -30,7 +34,7 @@ import (
 	"time"
 
 	openclaw "github.com/i0r3k/openclaw-sdk-go"
-	"github.com/i0r3k/openclaw-sdk-go/protocol"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/openclaw/protocol"
 )
 
 func main() {

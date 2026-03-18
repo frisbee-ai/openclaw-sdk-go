@@ -1,7 +1,9 @@
 # Phase 8: Utils Module
 
 **Files:**
-- Create: `utils/timeout.go`
+- Create: `pkg/openclaw/utils/timeout.go`
+
+**Project Structure:** Go module in root, source files in `pkg/openclaw/` directory
 
 **Depends on:** Phase 1
 
@@ -12,11 +14,11 @@
 - [ ] **Step 1: Create utils directory and timeout.go**
 
 ```bash
-mkdir -p utils
+mkdir -p pkg/openclaw/utils
 ```
 
 ```go
-// utils/timeout.go
+// pkg/openclaw/utils/timeout.go
 package utils
 
 import (
@@ -62,7 +64,7 @@ var DefaultTimeoutManager = NewTimeoutManager(30 * time.Second)
 - [ ] **Step 2: Write test**
 
 ```go
-// utils/timeout_test.go
+// pkg/openclaw/utils/timeout_test.go
 package utils
 
 import (
@@ -120,12 +122,12 @@ func TestWithCustomTimeout_Zero(t *testing.T) {
 
 - [ ] **Step 3: Run tests**
 
-Run: `go test -v ./utils/... -race`
+Run: `go test -v ./pkg/openclaw/utils/... -race`
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add utils/timeout.go
+git add pkg/openclaw/utils/timeout.go go.mod
 git commit -m "feat: add timeout manager"
 ```
 
@@ -134,6 +136,6 @@ git commit -m "feat: add timeout manager"
 ## Phase 8 Complete
 
 After this phase, you should have:
-- `utils/timeout.go` - Timeout manager
+- `pkg/openclaw/utils/timeout.go` - Timeout manager
 
 All code should compile.

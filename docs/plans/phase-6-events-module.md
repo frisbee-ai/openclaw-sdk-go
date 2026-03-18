@@ -1,8 +1,10 @@
 # Phase 6: Events Module
 
 **Files:**
-- Create: `events/tick.go`, `events/tick_test.go`
-- Create: `events/gap.go`, `events/gap_test.go`
+- Create: `pkg/openclaw/events/tick.go`, `pkg/openclaw/events/tick_test.go`
+- Create: `pkg/openclaw/events/gap.go`, `pkg/openclaw/events/gap_test.go`
+
+**Project Structure:** Go module in root, source files in `pkg/openclaw/` directory
 
 **Depends on:** Phase 1 (types.go)
 
@@ -13,11 +15,11 @@
 - [ ] **Step 1: Create events directory and tick.go**
 
 ```bash
-mkdir -p events
+mkdir -p pkg/openclaw/events
 ```
 
 ```go
-// events/tick.go
+// pkg/openclaw/events/tick.go
 package events
 
 import (
@@ -187,7 +189,7 @@ func (tm *TickMonitor) IsRunning() bool {
 - [ ] **Step 2: Write comprehensive test**
 
 ```go
-// events/tick_test.go
+// pkg/openclaw/events/tick_test.go
 package events
 
 import (
@@ -352,8 +354,8 @@ func TestTickMonitor_ConcurrentCallbacks(t *testing.T) {
 
 - [ ] **Step 3: Run tests and commit**
 
-Run: `go test -v ./events/... -race`
-Commit: `git add events/tick.go events/tick_test.go && git commit -m "feat: add tick monitor with thread-safe callbacks"`
+Run: `go test -v ./pkg/openclaw/events/... -race`
+Commit: `git add pkg/openclaw/events/tick.go pkg/openclaw/events/tick_test.go go.mod && git commit -m "feat: add tick monitor with thread-safe callbacks"`
 
 ---
 
@@ -362,7 +364,7 @@ Commit: `git add events/tick.go events/tick_test.go && git commit -m "feat: add 
 - [ ] **Step 1: Write gap.go**
 
 ```go
-// events/gap.go
+// pkg/openclaw/events/gap.go
 package events
 
 import (
@@ -466,7 +468,7 @@ func (gd *GapDetector) ExpectedSequence() uint64 {
 - [ ] **Step 2: Write comprehensive test**
 
 ```go
-// events/gap_test.go
+// pkg/openclaw/events/gap_test.go
 package events
 
 import (
@@ -619,18 +621,18 @@ func TestGapDetector_ConcurrentCallbacks(t *testing.T) {
 
 - [ ] **Step 3: Run tests and commit**
 
-Run: `go test -v ./events/... -race`
-Commit: `git add events/gap.go events/gap_test.go && git commit -m "feat: add gap detector with thread-safe operations"`
+Run: `go test -v ./pkg/openclaw/events/... -race`
+Commit: `git add pkg/openclaw/events/gap.go pkg/openclaw/events/gap_test.go go.mod && git commit -m "feat: add gap detector with thread-safe operations"`
 
 ---
 
 ## Phase 6 Complete
 
 After this phase, you should have:
-- `events/tick.go` - Tick monitor (heartbeat) with thread-safe callbacks
-- `events/tick_test.go` - Comprehensive tick monitor tests
-- `events/gap.go` - Gap detector with thread-safe operations
-- `events/gap_test.go` - Comprehensive gap detector tests
+- `pkg/openclaw/events/tick.go` - Tick monitor (heartbeat) with thread-safe callbacks
+- `pkg/openclaw/events/tick_test.go` - Comprehensive tick monitor tests
+- `pkg/openclaw/events/gap.go` - Gap detector with thread-safe operations
+- `pkg/openclaw/events/gap_test.go` - Comprehensive gap detector tests
 
 All code should compile and tests should pass.
 

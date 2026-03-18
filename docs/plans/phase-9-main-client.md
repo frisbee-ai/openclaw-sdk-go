@@ -1,7 +1,9 @@
 # Phase 9: Main Client
 
 **Files:**
-- Create: `client.go`, `client_test.go`
+- Create: `pkg/openclaw/client.go`, `pkg/openclaw/client_test.go`
+
+**Project Structure:** Go module in root, source files in `pkg/openclaw/` directory
 
 **Depends on:** All previous phases
 
@@ -20,9 +22,9 @@ import (
 	"sync"
 	"time"
 
-	"openclaw-sdk-go/managers"
-	"github.com/i0r3k/openclaw-sdk-go/protocol"
-	"openclaw-sdk-go/transport"
+	"openclaw-sdk-go/pkg/openclaw/managers"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/openclaw/protocol"
+	"openclaw-sdk-go/pkg/openclaw/transport"
 )
 
 // ClientConfig holds client configuration
@@ -244,7 +246,7 @@ func (c *client) Close() error {
 - [ ] **Step 2: Write basic test**
 
 ```go
-// client_test.go
+// pkg/openclaw/client_test.go
 package openclaw
 
 import (
@@ -281,15 +283,15 @@ func TestClientOptions(t *testing.T) {
 
 - [ ] **Step 3: Run tests and commit**
 
-Run: `go build ./... && go test -v ./...`
-Commit: `git add client.go client_test.go && git commit -m "feat: add main client with options"`
+Run: `go build ./pkg/openclaw/... && go test -v ./pkg/openclaw/...`
+Commit: `git add pkg/openclaw/client.go pkg/openclaw/client_test.go go.mod && git commit -m "feat: add main client with options"`
 
 ---
 
 ## Phase 9 Complete
 
 After this phase, you should have:
-- `client.go` - Main client with options pattern
+- `pkg/openclaw/client.go` - Main client with options pattern
 - All managers integrated
 
 All code should compile and tests should pass.
