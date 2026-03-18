@@ -55,7 +55,7 @@ func TestTlsValidator_Validate_ValidConfig(t *testing.T) {
 func TestTlsValidator_GetTLSConfig_Insecure(t *testing.T) {
 	v := NewTlsValidator(&TLSConfig{
 		InsecureSkipVerify: true,
-		ServerName:        "example.com",
+		ServerName:         "example.com",
 	})
 
 	config, err := v.GetTLSConfig()

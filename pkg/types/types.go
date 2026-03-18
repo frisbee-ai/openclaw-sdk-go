@@ -7,28 +7,28 @@ import "time"
 type ConnectionState string
 
 const (
-	StateDisconnected      ConnectionState = "disconnected"
-	StateConnecting        ConnectionState = "connecting"
-	StateConnected         ConnectionState = "connected"
-	StateAuthenticating    ConnectionState = "authenticating"
-	StateAuthenticated     ConnectionState = "authenticated"
-	StateReconnecting      ConnectionState = "reconnecting"
-	StateFailed            ConnectionState = "failed"
+	StateDisconnected   ConnectionState = "disconnected"
+	StateConnecting     ConnectionState = "connecting"
+	StateConnected      ConnectionState = "connected"
+	StateAuthenticating ConnectionState = "authenticating"
+	StateAuthenticated  ConnectionState = "authenticated"
+	StateReconnecting   ConnectionState = "reconnecting"
+	StateFailed         ConnectionState = "failed"
 )
 
 // EventType represents the type of event
 type EventType string
 
 const (
-	EventConnect      EventType = "connect"
-	EventDisconnect   EventType = "disconnect"
-	EventError        EventType = "error"
-	EventMessage      EventType = "message"
-	EventRequest      EventType = "request"
-	EventResponse     EventType = "response"
-	EventTick         EventType = "tick"
-	EventGap          EventType = "gap"
-	EventStateChange  EventType = "stateChange"
+	EventConnect     EventType = "connect"
+	EventDisconnect  EventType = "disconnect"
+	EventError       EventType = "error"
+	EventMessage     EventType = "message"
+	EventRequest     EventType = "request"
+	EventResponse    EventType = "response"
+	EventTick        EventType = "tick"
+	EventGap         EventType = "gap"
+	EventStateChange EventType = "stateChange"
 )
 
 // Event represents a generic event
@@ -45,8 +45,8 @@ type EventHandler func(Event)
 // ReconnectConfig holds reconnection settings
 type ReconnectConfig struct {
 	MaxAttempts       int
-	InitialDelay     time.Duration
-	MaxDelay         time.Duration
+	InitialDelay      time.Duration
+	MaxDelay          time.Duration
 	BackoffMultiplier float64
 }
 
@@ -55,8 +55,8 @@ type ReconnectConfig struct {
 func DefaultReconnectConfig() ReconnectConfig {
 	return ReconnectConfig{
 		MaxAttempts:       0, // 0 = infinite
-		InitialDelay:     1 * time.Second,
-		MaxDelay:         60 * time.Second,
+		InitialDelay:      1 * time.Second,
+		MaxDelay:          60 * time.Second,
 		BackoffMultiplier: 1.618,
 	}
 }

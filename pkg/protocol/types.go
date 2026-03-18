@@ -9,7 +9,7 @@ import (
 type FrameType string
 
 const (
-	FrameTypeGateway   FrameType = "gateway"
+	FrameTypeGateway  FrameType = "gateway"
 	FrameTypeRequest  FrameType = "request"
 	FrameTypeResponse FrameType = "response"
 	FrameTypeEvent    FrameType = "event"
@@ -28,7 +28,7 @@ func (f FrameType) IsValid() bool {
 // GatewayFrame is the main frame type
 type GatewayFrame struct {
 	Type      FrameType       `json:"type"`
-	Timestamp time.Time      `json:"timestamp"`
+	Timestamp time.Time       `json:"timestamp"`
 	Payload   json.RawMessage `json:"payload,omitempty"`
 }
 
@@ -45,7 +45,7 @@ type ResponseFrame struct {
 	RequestID string          `json:"requestId"`
 	Success   bool            `json:"success"`
 	Result    json.RawMessage `json:"result,omitempty"`
-	Error     *ResponseError `json:"error,omitempty"`
+	Error     *ResponseError  `json:"error,omitempty"`
 	Timestamp time.Time       `json:"timestamp"`
 }
 

@@ -103,7 +103,7 @@ func TestWebSocketTransport_Errors(t *testing.T) {
 func TestTLSConfig_toTLSConfig(t *testing.T) {
 	config := &TLSConfig{
 		InsecureSkipVerify: true,
-		ServerName:        "example.com",
+		ServerName:         "example.com",
 	}
 
 	tlsConfig := config.toTLSConfig()

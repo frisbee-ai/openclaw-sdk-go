@@ -30,13 +30,13 @@ func NewConnectionManager(ctx context.Context, config *ClientConfig, eventMgr *E
 
 // ConnectionManager manages WebSocket connections
 type ConnectionManager struct {
-	config   *ClientConfig
-	state    *connection.ConnectionStateMachine
+	config    *ClientConfig
+	state     *connection.ConnectionStateMachine
 	transport transport.Transport
-	eventMgr *EventManager
-	ctx      context.Context
-	wg       sync.WaitGroup
-	mu       sync.Mutex
+	eventMgr  *EventManager
+	ctx       context.Context
+	wg        sync.WaitGroup
+	mu        sync.Mutex
 }
 
 // Connect establishes a connection

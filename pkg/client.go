@@ -60,7 +60,7 @@ type TransportError = types.TransportError
 
 // Re-export error code constants
 const (
-	ErrCodeConnection  = types.ErrCodeConnection
+	ErrCodeConnection = types.ErrCodeConnection
 	ErrCodeAuth       = types.ErrCodeAuth
 	ErrCodeTimeout    = types.ErrCodeTimeout
 	ErrCodeProtocol   = types.ErrCodeProtocol
@@ -89,10 +89,10 @@ type NopLogger = types.NopLogger
 
 // Re-export logger functions
 var (
-	NewDefaultLogger         = types.NewDefaultLogger
+	NewDefaultLogger           = types.NewDefaultLogger
 	NewDefaultLoggerWithWriter = types.NewDefaultLoggerWithWriter
-	WithContext             = types.WithContext
-	FromContext             = types.FromContext
+	WithContext                = types.WithContext
+	FromContext                = types.FromContext
 )
 
 // ClientConfig holds client configuration

@@ -37,8 +37,8 @@ func TestClientOptions(t *testing.T) {
 		WithReconnect(true),
 		WithReconnectConfig(&ReconnectConfig{
 			MaxAttempts:       5,
-			InitialDelay:     1 * time.Second,
-			MaxDelay:         30 * time.Second,
+			InitialDelay:      1 * time.Second,
+			MaxDelay:          30 * time.Second,
 			BackoffMultiplier: 2.0,
 		}),
 		WithEventBufferSize(200),

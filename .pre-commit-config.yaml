@@ -1,0 +1,33 @@
+# Pre-commit hooks for Go project
+# See https://pre-commit.com for more information
+
+repos:
+  # Go fmt - format Go code
+  - repo: local
+    hooks:
+      - id: go-fmt
+        name: go fmt
+        entry: gofmt
+        language: system
+        args: [-w, -l, .]
+        pass_filenames: false
+
+  # Go vet - static analysis
+  - repo: local
+    hooks:
+      - id: go-vet
+        name: go vet
+        entry: go
+        language: system
+        args: [vet, ./...]
+        pass_filenames: false
+
+  # Go test - run tests
+  - repo: local
+    hooks:
+      - id: go-test
+        name: go test
+        entry: go
+        language: system
+        args: [test, ./...]
+        pass_filenames: false

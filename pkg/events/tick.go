@@ -9,19 +9,19 @@ import (
 
 // TickMonitor monitors connection heartbeat
 type TickMonitor struct {
-	interval   time.Duration
-	timeout    time.Duration
-	ticker     *time.Ticker
-	timer      *time.Timer
-	tickCh     chan time.Time
-	ctx        context.Context
-	cancel     context.CancelFunc
-	wg         sync.WaitGroup
-	mu         sync.RWMutex
-	onTick     func(time.Time)
-	onTimeout  func()
-	running    bool
-	stopped    chan struct{}
+	interval  time.Duration
+	timeout   time.Duration
+	ticker    *time.Ticker
+	timer     *time.Timer
+	tickCh    chan time.Time
+	ctx       context.Context
+	cancel    context.CancelFunc
+	wg        sync.WaitGroup
+	mu        sync.RWMutex
+	onTick    func(time.Time)
+	onTimeout func()
+	running   bool
+	stopped   chan struct{}
 }
 
 // ValidationError represents validation failure

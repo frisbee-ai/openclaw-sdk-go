@@ -33,13 +33,13 @@ func NewConnectionStateMachine(initial types.ConnectionState) *ConnectionStateMa
 
 // validTransitions defines valid state transitions using typed constants
 var validTransitions = map[types.ConnectionState][]types.ConnectionState{
-	types.StateDisconnected:     {types.StateConnecting},
-	types.StateConnecting:       {types.StateConnected, types.StateDisconnected, types.StateFailed},
-	types.StateConnected:        {types.StateAuthenticating, types.StateDisconnected, types.StateReconnecting, types.StateFailed},
-	types.StateAuthenticating:   {types.StateAuthenticated, types.StateFailed},
-	types.StateAuthenticated:    {types.StateDisconnected, types.StateReconnecting},
-	types.StateReconnecting:    {types.StateConnecting, types.StateFailed},
-	types.StateFailed:           {types.StateDisconnected},
+	types.StateDisconnected:   {types.StateConnecting},
+	types.StateConnecting:     {types.StateConnected, types.StateDisconnected, types.StateFailed},
+	types.StateConnected:      {types.StateAuthenticating, types.StateDisconnected, types.StateReconnecting, types.StateFailed},
+	types.StateAuthenticating: {types.StateAuthenticated, types.StateFailed},
+	types.StateAuthenticated:  {types.StateDisconnected, types.StateReconnecting},
+	types.StateReconnecting:   {types.StateConnecting, types.StateFailed},
+	types.StateFailed:         {types.StateDisconnected},
 }
 
 func (csm *ConnectionStateMachine) validTransition(from, to types.ConnectionState) bool {

@@ -21,10 +21,10 @@ type TlsValidator struct {
 // This version supports certificate loading and validation
 type TLSConfig struct {
 	InsecureSkipVerify bool
-	CertFile          string
-	KeyFile           string
-	CAFile            string
-	ServerName        string
+	CertFile           string
+	KeyFile            string
+	CAFile             string
+	ServerName         string
 }
 
 // ErrInvalidTLSConfig represents TLS configuration validation errors

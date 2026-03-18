@@ -7,13 +7,13 @@ import "errors"
 type ErrorCode string
 
 const (
-	ErrCodeConnection   ErrorCode = "CONNECTION_ERROR"
-	ErrCodeAuth        ErrorCode = "AUTH_ERROR"
-	ErrCodeTimeout     ErrorCode = "TIMEOUT"
-	ErrCodeProtocol    ErrorCode = "PROTOCOL_ERROR"
-	ErrCodeValidation  ErrorCode = "VALIDATION_ERROR"
-	ErrCodeTransport   ErrorCode = "TRANSPORT_ERROR"
-	ErrCodeUnknown     ErrorCode = "UNKNOWN"
+	ErrCodeConnection ErrorCode = "CONNECTION_ERROR"
+	ErrCodeAuth       ErrorCode = "AUTH_ERROR"
+	ErrCodeTimeout    ErrorCode = "TIMEOUT"
+	ErrCodeProtocol   ErrorCode = "PROTOCOL_ERROR"
+	ErrCodeValidation ErrorCode = "VALIDATION_ERROR"
+	ErrCodeTransport  ErrorCode = "TRANSPORT_ERROR"
+	ErrCodeUnknown    ErrorCode = "UNKNOWN"
 )
 
 // OpenClawError is the base error interface
@@ -30,9 +30,9 @@ type BaseError struct {
 	err     error
 }
 
-func (e *BaseError) Error() string { return e.message }
+func (e *BaseError) Error() string   { return e.message }
 func (e *BaseError) Code() ErrorCode { return e.code }
-func (e *BaseError) Unwrap() error { return e.err }
+func (e *BaseError) Unwrap() error   { return e.err }
 
 // ConnectionError represents a connection error
 type ConnectionError struct {

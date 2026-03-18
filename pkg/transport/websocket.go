@@ -12,7 +12,7 @@ import (
 
 // WebSocketConfig holds WebSocket configuration
 type WebSocketConfig struct {
-	URL                string
+	URL               string
 	ReadBufferSize    int
 	WriteBufferSize   int
 	Header            http.Header
@@ -30,10 +30,10 @@ type WebSocketConfig struct {
 // Both serve different purposes and can coexist.
 type TLSConfig struct {
 	InsecureSkipVerify bool
-	CertFile         string
-	KeyFile          string
-	CAFile           string
-	ServerName       string
+	CertFile           string
+	KeyFile            string
+	CAFile             string
+	ServerName         string
 }
 
 // CloseError represents a WebSocket close error
@@ -82,8 +82,8 @@ func Dial(url string, header http.Header, config *WebSocketConfig) (*WebSocketTr
 	}
 
 	dialer := websocket.Dialer{
-		ReadBufferSize:  readBufSize,
-		WriteBufferSize: writeBufSize,
+		ReadBufferSize:   readBufSize,
+		WriteBufferSize:  writeBufSize,
 		HandshakeTimeout: handshakeTimeout,
 	}
 
