@@ -1,10 +1,10 @@
 # Phase 1: Project Setup and Foundation
 
 **Files:**
-- Create: `go.mod`
-- Create: `types.go`
+- Create: `go.mod` (no external deps yet)
+- Create: `types.go`, `types_test.go`
 - Create: `errors.go`, `errors_test.go`
-- Create: `logger.go`
+- Create: `logger.go`, `logger_test.go`
 
 ---
 
@@ -22,20 +22,16 @@ go mod init github.com/i0r3k/openclaw-sdk-go
 module github.com/i0r3k/openclaw-sdk-go
 
 go 1.21
-
-require github.com/gorilla/websocket v1.5.1
 ```
 
-- [ ] **Step 2: Add dependencies**
-
-Run: `go mod tidy`
-
-- [ ] **Step 3: Commit**
+- [ ] **Step 2: Commit (no dependencies yet - defer to Phase 4)**
 
 ```bash
-git add go.mod go.sum
-git commit -m "chore: initialize go module with dependencies"
+git add go.mod
+git commit -m "chore: initialize go module"
 ```
+
+> **Note**: Dependencies (gorilla/websocket) will be added in Phase 4 when transport is implemented.
 
 ---
 
@@ -96,24 +92,99 @@ type ReconnectConfig struct {
 }
 
 // DefaultReconnectConfig returns sensible defaults
-func DefaultReconnectConfig() *ReconnectConfig {
-	return &ReconnectConfig{
-		MaxAttempts:       0,
+// Note: InitialDelay must be <= MaxDelay for valid backoff
+func DefaultReconnectConfig() ReconnectConfig {
+	return ReconnectConfig{
+		MaxAttempts:       0, // 0 = infinite
 		InitialDelay:     1 * time.Second,
 		MaxDelay:         60 * time.Second,
 		BackoffMultiplier: 1.618,
 	}
 }
+
+// Validate validates the reconnect configuration
+func (r ReconnectConfig) Validate() error {
+	if r.InitialDelay > r.MaxDelay {
+		return &ValidationError{&BaseError{ErrCodeValidation, "InitialDelay must be <= MaxDelay", nil}}
+	}
+	return nil
+}
 ```
 
-- [ ] **Step 2: Verify it compiles**
+- [ ] **Step 2: Write types_test.go**
 
-Run: `go build ./...`
+```go
+package openclaw
 
-- [ ] **Step 3: Commit**
+import (
+	"testing"
+	"time"
+)
+
+func TestConnectionState(t *testing.T) {
+	states := []ConnectionState{
+		StateDisconnected,
+		StateConnecting,
+		StateConnected,
+		StateAuthenticating,
+		StateAuthenticated,
+		StateReconnecting,
+		StateFailed,
+	}
+
+	for _, s := range states {
+		if s == "" {
+			t.Error("state should not be empty")
+		}
+	}
+}
+
+func TestEventType(t *testing.T) {
+	types := []EventType{
+		EventConnect,
+		EventDisconnect,
+		EventError,
+		EventMessage,
+		EventRequest,
+		EventResponse,
+		EventTick,
+		EventGap,
+		EventStateChange,
+	}
+
+	for _, et := range types {
+		if et == "" {
+			t.Error("event type should not be empty")
+		}
+	}
+}
+
+func TestDefaultReconnectConfig(t *testing.T) {
+	cfg := DefaultReconnectConfig()
+
+	if cfg.MaxAttempts != 0 {
+		t.Errorf("expected MaxAttempts=0 (infinite), got %d", cfg.MaxAttempts)
+	}
+	if cfg.InitialDelay != 1*time.Second {
+		t.Errorf("expected InitialDelay=1s, got %v", cfg.InitialDelay)
+	}
+	if cfg.MaxDelay != 60*time.Second {
+		t.Errorf("expected MaxDelay=60s, got %v", cfg.MaxDelay)
+	}
+	if cfg.BackoffMultiplier != 1.618 {
+		t.Errorf("expected BackoffMultiplier=1.618, got %f", cfg.BackoffMultiplier)
+	}
+}
+```
+
+- [ ] **Step 3: Verify it compiles and tests pass**
+
+Run: `go build ./... && go test -v ./...`
+
+- [ ] **Step 4: Commit**
 
 ```bash
-git add types.go
+git add types.go types_test.go
 git commit -m "feat: add common types and constants"
 ```
 
@@ -126,7 +197,7 @@ git commit -m "feat: add common types and constants"
 ```go
 package openclaw
 
-import "fmt"
+import "errors"
 
 // ErrorCode represents an error code
 type ErrorCode string
@@ -225,6 +296,7 @@ func NewTransportError(message string, err error) OpenClawError {
 }
 
 // Is checks if the error matches the given code
+// Uses standard library errors.Is() with custom unwrap
 func Is(err error, code ErrorCode) bool {
 	var e OpenClawError
 	if As(err, &e) {
@@ -234,31 +306,21 @@ func Is(err error, code ErrorCode) bool {
 }
 
 // As casts the error to OpenClawError
-func As(err error, target interface{}) bool {
-	if target == nil {
-		return false
-	}
-	if e, ok := err.(OpenClawError); ok {
-		if t, ok := target.(**OpenClawError); ok {
-			*t = &e
-			return true
-		}
-	}
-	return false
+// Uses standard library errors.As() for proper type matching
+func As(err error, target *OpenClawError) bool {
+	return errors.As(err, target)
 }
 ```
 
-- [ ] **Step 2: Verify it compiles**
+> **Note**: Added `import "errors"` to use standard library's error unwrapping.
 
-Run: `go build ./...`
-
-- [ ] **Step 3: Write basic test**
+- [ ] **Step 2: Write comprehensive errors_test.go**
 
 ```go
-// errors_test.go
 package openclaw
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -281,13 +343,56 @@ func TestIs(t *testing.T) {
 		t.Error("expected Is to return false for non-matching code")
 	}
 }
+
+func TestAs(t *testing.T) {
+	baseErr := NewError(ErrCodeConnection, "test", nil)
+	var target OpenClawError
+	if !As(baseErr, &target) {
+		t.Error("expected As to return true")
+	}
+	if target.Code() != ErrCodeConnection {
+		t.Error("expected to extract error with correct code")
+	}
+}
+
+func TestErrorUnwrap(t *testing.T) {
+	original := errors.New("original error")
+	err := NewConnectionError("wrapped error", original)
+
+	if !errors.Is(err, original) {
+		t.Error("expected unwrap to return original error")
+	}
+}
+
+func TestAllErrorTypes(t *testing.T) {
+	tests := []struct {
+		name     string
+		err     OpenClawError
+		expected ErrorCode
+	}{
+		{"ConnectionError", NewConnectionError("test", nil), ErrCodeConnection},
+		{"AuthError", NewAuthError("test", nil), ErrCodeAuth},
+		{"TimeoutError", NewTimeoutError("test", nil), ErrCodeTimeout},
+		{"ProtocolError", NewProtocolError("test", nil), ErrCodeProtocol},
+		{"ValidationError", NewValidationError("test", nil), ErrCodeValidation},
+		{"TransportError", NewTransportError("test", nil), ErrCodeTransport},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.err.Code() != tt.expected {
+				t.Errorf("expected %s, got %s", tt.expected, tt.err.Code())
+			}
+		})
+	}
+}
 ```
 
-- [ ] **Step 4: Run tests**
+- [ ] **Step 3: Verify it compiles and tests pass**
 
-Run: `go test -v ./...`
+Run: `go build ./... && go test -v ./...`
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add errors.go errors_test.go
@@ -303,9 +408,15 @@ git commit -m "feat: add error type hierarchy"
 ```go
 package openclaw
 
-import "log"
+import (
+	"context"
+	"io"
+	"log"
+	"os"
+)
 
 // Logger interface for customizable logging
+// Follows standard Go logging patterns with level support
 type Logger interface {
 	Debug(msg string, args ...any)
 	Info(msg string, args ...any)
@@ -314,19 +425,126 @@ type Logger interface {
 }
 
 // DefaultLogger uses stdlib log
-type DefaultLogger struct{}
+type DefaultLogger struct {
+	debug *log.Logger
+	info  *log.Logger
+	warn  *log.Logger
+	error *log.Logger
+}
 
-func (l *DefaultLogger) Debug(msg string, args ...any) { log.Printf("[DEBUG] "+msg, args...) }
-func (l *DefaultLogger) Info(msg string, args ...any)  { log.Printf("[INFO] "+msg, args...) }
-func (l *DefaultLogger) Warn(msg string, args ...any)  { log.Printf("[WARN] "+msg, args...) }
-func (l *DefaultLogger) Error(msg string, args ...any) { log.Printf("[ERROR] "+msg, args...) }
+// NewDefaultLogger creates a logger that writes to stdout
+func NewDefaultLogger() *DefaultLogger {
+	return &DefaultLogger{
+		debug: log.New(os.Stdout, "[DEBUG] ", log.Ldate|log.Ltime),
+		info:  log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime),
+		warn:  log.New(os.Stdout, "[WARN] ", log.Ldate|log.Ltime),
+		error: log.New(os.Stderr, "[ERROR] ", log.Ldate|log.Ltime),
+	}
+}
+
+// NewDefaultLoggerWithWriter creates a logger with custom writer
+func NewDefaultLoggerWithWriter(w io.Writer) *DefaultLogger {
+	return &DefaultLogger{
+		debug: log.New(w, "[DEBUG] ", log.Ldate|log.Ltime),
+		info:  log.New(w, "[INFO] ", log.Ldate|log.Ltime),
+		warn:  log.New(w, "[WARN] ", log.Ldate|log.Ltime),
+		error: log.New(w, "[ERROR] ", log.Ldate|log.Ltime),
+	}
+}
+
+func (l *DefaultLogger) Debug(msg string, args ...any) { l.debug.Printf(msg, args...) }
+func (l *DefaultLogger) Info(msg string, args ...any)  { l.info.Printf(msg, args...) }
+func (l *DefaultLogger) Warn(msg string, args ...any)  { l.warn.Printf(msg, args...) }
+func (l *DefaultLogger) Error(msg string, args ...any) { l.error.Printf(msg, args...) }
+
+// NopLogger is a no-op implementation for testing
+type NopLogger struct{}
+
+func (l *NopLogger) Debug(msg string, args ...any) {}
+func (l *NopLogger) Info(msg string, args ...any)  {}
+func (l *NopLogger) Warn(msg string, args ...any)  {}
+func (l *NopLogger) Error(msg string, args ...any) {}
+
+// WithContext creates a context with logger
+func WithContext(ctx context.Context, logger Logger) context.Context {
+	return context.WithValue(ctx, loggerKey{}, logger)
+}
+
+// FromContext retrieves logger from context
+func FromContext(ctx context.Context) (Logger, bool) {
+	logger, ok := ctx.Value(loggerKey{}).(Logger)
+	return logger, ok
+}
+
+type loggerKey struct{}
 ```
 
-- [ ] **Step 2: Commit**
+- [ ] **Step 2: Write logger_test.go**
+
+```go
+package openclaw
+
+import (
+	"bytes"
+	"testing"
+)
+
+func TestDefaultLogger(t *testing.T) {
+	buf := &bytes.Buffer{}
+	logger := NewDefaultLoggerWithWriter(buf)
+
+	logger.Info("test message %s", "world")
+	logger.Debug("debug message")
+	logger.Warn("warning message")
+	logger.Error("error message")
+
+	output := buf.String()
+	if output == "" {
+		t.Error("expected logger output")
+	}
+}
+
+func TestNopLogger(t *testing.T) {
+	logger := &NopLogger{}
+	// Should not panic
+	logger.Debug("debug")
+	logger.Info("info")
+	logger.Warn("warn")
+	logger.Error("error")
+}
+
+func TestLoggerInterface(t *testing.T) {
+	// Verify DefaultLogger implements Logger
+	var _ Logger = &DefaultLogger{}
+	// Verify NopLogger implements Logger
+	var _ Logger = &NopLogger{}
+}
+
+func TestWithContext(t *testing.T) {
+	ctx := context.Background()
+	logger := &NopLogger{}
+
+	ctx = WithContext(ctx, logger)
+	retrieved, ok := FromContext(ctx)
+
+	if !ok {
+		t.Error("expected to retrieve logger from context")
+	}
+	if retrieved != logger {
+		t.Error("expected to retrieve same logger")
+	}
+}
+```
+
+- [ ] **Step 3: Verify it compiles and tests pass**
+
+Run: `go build ./... && go test -v ./...`
+
+- [ ] **Step 4: Commit**
 
 ```bash
-git add logger.go
-git commit -m "feat: add Logger interface"
+git add logger.go logger_test.go
+git commit -m "feat: add Logger interface with context support"
 ```
 
 ---
@@ -334,9 +552,12 @@ git commit -m "feat: add Logger interface"
 ## Phase 1 Complete
 
 After this phase, you should have:
-- `go.mod` - Go module initialized
+- `go.mod` - Go module initialized (no external deps yet)
 - `types.go` - Common types and constants
+- `types_test.go` - Types tests
 - `errors.go` - Error type hierarchy
-- `logger.go` - Logger interface
+- `errors_test.go` - Comprehensive error tests
+- `logger.go` - Logger interface with context support
+- `logger_test.go` - Logger tests
 
 All code should compile and tests should pass.
