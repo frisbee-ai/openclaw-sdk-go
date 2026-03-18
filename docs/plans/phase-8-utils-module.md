@@ -30,7 +30,11 @@ type TimeoutManager struct {
 }
 
 // NewTimeoutManager creates a new timeout manager
+// If defaultTimeout is negative, it will be set to 0 (no timeout)
 func NewTimeoutManager(defaultTimeout time.Duration) *TimeoutManager {
+	if defaultTimeout < 0 {
+		defaultTimeout = 0
+	}
 	return &TimeoutManager{defaultTimeout: defaultTimeout}
 }
 
@@ -43,7 +47,11 @@ func (tm *TimeoutManager) WithTimeout(parent context.Context) (context.Context, 
 }
 
 // WithCustomTimeout wraps a context with a custom timeout
+// If timeout is zero or negative, behaves like WithCancel (no timeout)
 func (tm *TimeoutManager) WithCustomTimeout(parent context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+	if timeout <= 0 {
+		return context.WithCancel(parent)
+	}
 	return context.WithTimeout(parent, timeout)
 }
 
@@ -51,7 +59,70 @@ func (tm *TimeoutManager) WithCustomTimeout(parent context.Context, timeout time
 var DefaultTimeoutManager = NewTimeoutManager(30 * time.Second)
 ```
 
-- [ ] **Step 2: Commit**
+- [ ] **Step 2: Write test**
+
+```go
+// utils/timeout_test.go
+package utils
+
+import (
+	"context"
+	"testing"
+	"time"
+)
+
+func TestNewTimeoutManager_Negative(t *testing.T) {
+	tm := NewTimeoutManager(-1 * time.Second)
+	if tm.defaultTimeout != 0 {
+		t.Errorf("expected 0, got %v", tm.defaultTimeout)
+	}
+}
+
+func TestNewTimeoutManager_Zero(t *testing.T) {
+	tm := NewTimeoutManager(0)
+	if tm.defaultTimeout != 0 {
+		t.Errorf("expected 0, got %v", tm.defaultTimeout)
+	}
+}
+
+func TestWithTimeout_Default(t *testing.T) {
+	tm := NewTimeoutManager(10 * time.Second)
+	ctx, cancel := tm.WithTimeout(context.Background())
+	defer cancel()
+
+	if ctx == nil {
+		t.Error("expected non-nil context")
+	}
+}
+
+func TestWithCustomTimeout_Negative(t *testing.T) {
+	tm := NewTimeoutManager(10 * time.Second)
+	ctx, cancel := tm.WithCustomTimeout(context.Background(), -5*time.Second)
+	defer cancel()
+
+	// Negative timeout should behave like no timeout (WithCancel)
+	if ctx == nil {
+		t.Error("expected non-nil context")
+	}
+}
+
+func TestWithCustomTimeout_Zero(t *testing.T) {
+	tm := NewTimeoutManager(10 * time.Second)
+	ctx, cancel := tm.WithCustomTimeout(context.Background(), 0)
+	defer cancel()
+
+	// Zero timeout should behave like no timeout
+	if ctx == nil {
+		t.Error("expected non-nil context")
+	}
+}
+```
+
+- [ ] **Step 3: Run tests**
+
+Run: `go test -v ./utils/... -race`
+
+- [ ] **Step 4: Commit**
 
 ```bash
 git add utils/timeout.go
