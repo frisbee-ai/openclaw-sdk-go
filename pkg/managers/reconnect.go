@@ -1,4 +1,10 @@
-// Package managers provides high-level manager components for the OpenClaw SDK.
+// Package managers provides high-level manager components for OpenClaw SDK.
+//
+// This package provides:
+//   - EventManager: Pub/sub event management
+//   - RequestManager: Pending request correlation
+//   - ConnectionManager: WebSocket connection lifecycle
+//   - ReconnectManager: Automatic reconnection with Fibonacci backoff
 package managers
 
 import (
@@ -9,30 +15,33 @@ import (
 	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
-// ReconnectConfig holds reconnection configuration
-// Uses types.ReconnectConfig
+// ReconnectConfig holds reconnection configuration.
+// Uses types.ReconnectConfig.
 type ReconnectConfig = types.ReconnectConfig
 
-// DefaultReconnectConfig returns default configuration
+// DefaultReconnectConfig returns default reconnection configuration.
+// Default: max attempts = 0 (infinite), initial delay = 1s, max delay = 60s.
 func DefaultReconnectConfig() *ReconnectConfig {
 	cfg := types.DefaultReconnectConfig()
 	return &cfg
 }
 
-// ReconnectManager handles automatic reconnection
+// ReconnectManager handles automatic reconnection with Fibonacci backoff.
+// It attempts to reconnect when the connection is lost, using exponential backoff.
 type ReconnectManager struct {
-	config            *ReconnectConfig
-	mu                sync.Mutex
-	ctx               context.Context
-	cancel            context.CancelFunc
-	wg                sync.WaitGroup
-	onReconnect       func() error
-	onReconnectFailed func(err error)
-	stopped           chan struct{}
-	stoppedOnce       sync.Once
+	config            *ReconnectConfig   // Reconnection configuration
+	mu                sync.Mutex         // Mutex for thread-safety
+	ctx               context.Context    // Context for lifecycle
+	cancel            context.CancelFunc // Cancel function
+	wg                sync.WaitGroup     // WaitGroup for goroutines
+	onReconnect       func() error       // Callback for reconnection attempts
+	onReconnectFailed func(err error)    // Callback for reconnection failures
+	stopped           chan struct{}      // Channel to signal stop
+	stoppedOnce       sync.Once          // Ensure stopped channel is closed once
 }
 
-// NewReconnectManager creates a new reconnect manager
+// NewReconnectManager creates a new reconnect manager with the given configuration.
+// If config is nil, uses default configuration.
 func NewReconnectManager(config *ReconnectConfig) *ReconnectManager {
 	if config == nil {
 		config = DefaultReconnectConfig()
@@ -46,26 +55,29 @@ func NewReconnectManager(config *ReconnectConfig) *ReconnectManager {
 	}
 }
 
-// SetOnReconnect sets the reconnect callback
+// SetOnReconnect sets the callback function to be called when attempting to reconnect.
 func (rm *ReconnectManager) SetOnReconnect(f func() error) {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 	rm.onReconnect = f
 }
 
-// SetOnReconnectFailed sets the reconnect failed callback
+// SetOnReconnectFailed sets the callback function to be called when reconnection fails.
 func (rm *ReconnectManager) SetOnReconnectFailed(f func(err error)) {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 	rm.onReconnectFailed = f
 }
 
-// Start begins the reconnection loop
+// Start begins the reconnection loop in a background goroutine.
+// It uses Fibonacci backoff to calculate delay between attempts.
 func (rm *ReconnectManager) Start() {
 	rm.wg.Add(1)
 	go rm.run()
 }
 
+// run is the main reconnection loop.
+// It implements Fibonacci backoff: each delay is the sum of the previous two delays.
 func (rm *ReconnectManager) run() {
 	defer rm.wg.Done()
 
@@ -124,7 +136,8 @@ func (rm *ReconnectManager) run() {
 	}
 }
 
-// Stop stops the reconnection attempts (idempotent)
+// Stop stops the reconnection attempts.
+// It is idempotent - calling multiple times is safe.
 func (rm *ReconnectManager) Stop() {
 	rm.cancel()
 	rm.stoppedOnce.Do(func() {
@@ -133,7 +146,8 @@ func (rm *ReconnectManager) Stop() {
 	rm.wg.Wait()
 }
 
-// Reset is a no-op for compatibility (attempts tracked locally in run())
+// Reset is a no-op for compatibility.
+// Attempts are tracked locally in the run() loop.
 func (rm *ReconnectManager) Reset() {
 	// Attempts are tracked in run() loop, not persisted
 }

@@ -1,4 +1,10 @@
-// Package connection provides connection management components
+// Package connection provides connection management components for OpenClaw SDK.
+//
+// This package provides:
+//   - ConnectionStateMachine: State machine for managing connection lifecycle
+//   - PolicyManager: Connection policy configuration
+//   - ProtocolNegotiator: Protocol version negotiation
+//   - TLS validation: Certificate and configuration validation
 package connection
 
 import (
@@ -8,21 +14,23 @@ import (
 	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
-// StateChangeEvent represents a state change event
+// StateChangeEvent represents a state change event in the connection lifecycle.
+// It contains the previous state (From), new state (To), and optional reason (error).
 type StateChangeEvent struct {
-	From   types.ConnectionState
-	To     types.ConnectionState
-	Reason error
+	From   types.ConnectionState // Previous connection state
+	To     types.ConnectionState // New connection state
+	Reason error                 // Optional error that caused the transition
 }
 
-// ConnectionStateMachine manages connection state
+// ConnectionStateMachine manages connection state transitions.
+// It enforces valid state transitions and emits events on state changes.
 type ConnectionStateMachine struct {
-	state  types.ConnectionState
-	mu     sync.RWMutex
-	events chan StateChangeEvent
+	state  types.ConnectionState // Current connection state
+	mu     sync.RWMutex          // Protects state access
+	events chan StateChangeEvent // Channel for state change events
 }
 
-// NewConnectionStateMachine creates a new state machine
+// NewConnectionStateMachine creates a new state machine with the given initial state.
 func NewConnectionStateMachine(initial types.ConnectionState) *ConnectionStateMachine {
 	return &ConnectionStateMachine{
 		state:  initial,
@@ -30,7 +38,8 @@ func NewConnectionStateMachine(initial types.ConnectionState) *ConnectionStateMa
 	}
 }
 
-// validTransitions defines valid state transitions using typed constants
+// validTransitions defines valid state transitions using typed constants.
+// Each key is a state, and the value is a slice of states it can transition to.
 var validTransitions = map[types.ConnectionState][]types.ConnectionState{
 	types.StateDisconnected:   {types.StateConnecting},
 	types.StateConnecting:     {types.StateConnected, types.StateDisconnected, types.StateFailed},
@@ -41,6 +50,7 @@ var validTransitions = map[types.ConnectionState][]types.ConnectionState{
 	types.StateFailed:         {types.StateDisconnected},
 }
 
+// validTransition checks if a state transition is valid.
 func (csm *ConnectionStateMachine) validTransition(from, to types.ConnectionState) bool {
 	allowed, ok := validTransitions[from]
 	if !ok {
@@ -54,7 +64,8 @@ func (csm *ConnectionStateMachine) validTransition(from, to types.ConnectionStat
 	return false
 }
 
-// Transition changes the state
+// Transition changes the state from the current state to the target state.
+// Returns an error if the transition is invalid or if the event channel is full.
 func (csm *ConnectionStateMachine) Transition(to types.ConnectionState, reason error) error {
 	csm.mu.Lock()
 	from := csm.state
@@ -74,14 +85,15 @@ func (csm *ConnectionStateMachine) Transition(to types.ConnectionState, reason e
 	return nil
 }
 
-// State returns the current state
+// State returns the current connection state (thread-safe).
 func (csm *ConnectionStateMachine) State() types.ConnectionState {
 	csm.mu.RLock()
 	defer csm.mu.RUnlock()
 	return csm.state
 }
 
-// Events returns the state change event channel
+// Events returns the state change event channel.
+// Callers can receive state change notifications from this channel.
 func (csm *ConnectionStateMachine) Events() <-chan StateChangeEvent {
 	return csm.events
 }

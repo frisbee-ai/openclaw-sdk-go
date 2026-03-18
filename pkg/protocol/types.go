@@ -1,3 +1,9 @@
+// Package protocol provides protocol frame types and utilities for OpenClaw SDK.
+//
+// This package defines the wire protocol for WebSocket communication:
+//   - FrameType: Types of protocol frames (gateway, request, response, event, error)
+//   - Frame structures: GatewayFrame, RequestFrame, ResponseFrame, EventFrame
+//   - Factory functions: NewRequestFrame, NewResponseFrame, NewEventFrame
 package protocol
 
 import (
@@ -5,7 +11,8 @@ import (
 	"time"
 )
 
-// FrameType represents the type of frame
+// FrameType represents the type of frame in the protocol.
+// Each frame type has a specific role in the communication flow.
 type FrameType string
 
 const (
@@ -25,14 +32,16 @@ func (f FrameType) IsValid() bool {
 	return false
 }
 
-// GatewayFrame is the main frame type
+// GatewayFrame is the main frame wrapper for all protocol messages.
+// It contains the frame type, timestamp, and payload (JSON-encoded content).
 type GatewayFrame struct {
 	Type      FrameType       `json:"type"`
 	Timestamp time.Time       `json:"timestamp"`
 	Payload   json.RawMessage `json:"payload,omitempty"`
 }
 
-// RequestFrame represents a request frame
+// RequestFrame represents an outbound request frame.
+// Contains requestId for correlation, method name, optional params, and timestamp.
 type RequestFrame struct {
 	RequestID string          `json:"requestId"`
 	Method    string          `json:"method"`
@@ -40,7 +49,8 @@ type RequestFrame struct {
 	Timestamp time.Time       `json:"timestamp"`
 }
 
-// ResponseFrame represents a response frame
+// ResponseFrame represents an inbound response frame.
+// Correlated with RequestFrame via RequestID. Success indicates if the request succeeded.
 type ResponseFrame struct {
 	RequestID string          `json:"requestId"`
 	Success   bool            `json:"success"`
@@ -49,13 +59,14 @@ type ResponseFrame struct {
 	Timestamp time.Time       `json:"timestamp"`
 }
 
-// ResponseError represents an error in a response
+// ResponseError represents an error in a response when Success is false.
 type ResponseError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
 
-// EventFrame represents an event frame
+// EventFrame represents an event frame from the server.
+// Used for push notifications and server-initiated messages.
 type EventFrame struct {
 	EventType string          `json:"eventType"`
 	Data      json.RawMessage `json:"data,omitempty"`

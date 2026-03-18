@@ -1,4 +1,10 @@
-// Package managers provides high-level manager components for the OpenClaw SDK.
+// Package managers provides high-level manager components for OpenClaw SDK.
+//
+// This package provides:
+//   - EventManager: Pub/sub event management
+//   - RequestManager: Pending request correlation
+//   - ConnectionManager: WebSocket connection lifecycle
+//   - ReconnectManager: Automatic reconnection with Fibonacci backoff
 package managers
 
 import (
@@ -9,19 +15,20 @@ import (
 	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
-// EventManager manages event subscriptions and dispatching
+// EventManager manages event subscriptions and dispatching.
+// It provides a thread-safe pub/sub system for SDK events.
 type EventManager struct {
-	events   chan types.Event
-	handlers map[types.EventType]map[uintptr]types.EventHandler
-	ctx      context.Context
-	cancel   context.CancelFunc
-	mu       sync.RWMutex
-	wg       sync.WaitGroup
-	closed   bool
-	closedMu sync.Mutex
+	events   chan types.Event                                   // Channel for incoming events
+	handlers map[types.EventType]map[uintptr]types.EventHandler // Map of event type to handlers
+	ctx      context.Context                                    // Context for lifecycle management
+	cancel   context.CancelFunc                                 // Cancel function for context
+	mu       sync.RWMutex                                       // Mutex for thread-safe handler access
+	wg       sync.WaitGroup                                     // WaitGroup for goroutines
+	closed   bool                                               // Flag indicating if manager is closed
+	closedMu sync.Mutex                                         // Mutex for close flag
 }
 
-// NewEventManager creates a new event manager
+// NewEventManager creates a new event manager with the specified buffer size.
 func NewEventManager(ctx context.Context, bufferSize int) *EventManager {
 	ctx, cancel := context.WithCancel(ctx)
 	return &EventManager{
@@ -32,7 +39,8 @@ func NewEventManager(ctx context.Context, bufferSize int) *EventManager {
 	}
 }
 
-// Subscribe adds an event handler
+// Subscribe adds an event handler for the specified event type.
+// Returns an unsubscribe function that can be called to remove the handler.
 func (em *EventManager) Subscribe(eventType types.EventType, handler types.EventHandler) func() {
 	em.mu.Lock()
 	defer em.mu.Unlock()
@@ -54,7 +62,7 @@ func (em *EventManager) Subscribe(eventType types.EventType, handler types.Event
 	return func() { em.Unsubscribe(eventType, key) }
 }
 
-// Unsubscribe removes an event handler by key
+// Unsubscribe removes an event handler by event type and key.
 func (em *EventManager) Unsubscribe(eventType types.EventType, key uintptr) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
@@ -63,12 +71,13 @@ func (em *EventManager) Unsubscribe(eventType types.EventType, key uintptr) {
 	}
 }
 
-// Events returns the event channel
+// Events returns the event channel for receiving all events.
 func (em *EventManager) Events() <-chan types.Event {
 	return em.events
 }
 
-// Emit emits an event
+// Emit emits an event to the event channel.
+// Non-blocking: if the channel is full, it will return immediately.
 func (em *EventManager) Emit(event types.Event) {
 	select {
 	case em.events <- event:
@@ -76,7 +85,8 @@ func (em *EventManager) Emit(event types.Event) {
 	}
 }
 
-// Start begins the event dispatch loop
+// Start begins the event dispatch loop in a background goroutine.
+// It listens for events and dispatches them to registered handlers.
 func (em *EventManager) Start() {
 	em.wg.Add(1)
 	go func() {
@@ -92,7 +102,9 @@ func (em *EventManager) Start() {
 	}()
 }
 
-// dispatch sends event to all registered handlers
+// dispatch sends event to all registered handlers for the event type.
+// Handlers are called in goroutines to prevent blocking.
+// Panics in handlers are recovered to continue processing other handlers.
 func (em *EventManager) dispatch(event types.Event) {
 	em.mu.RLock()
 	handlerMap := em.handlers[event.Type]
@@ -114,7 +126,8 @@ func (em *EventManager) dispatch(event types.Event) {
 	}
 }
 
-// Close gracefully shuts down the event manager
+// Close gracefully shuts down the event manager.
+// It is idempotent - calling multiple times is safe.
 func (em *EventManager) Close() error {
 	em.closedMu.Lock()
 	if em.closed {

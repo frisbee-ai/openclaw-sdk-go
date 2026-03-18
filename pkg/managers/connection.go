@@ -1,4 +1,10 @@
-// Package managers provides high-level manager components for the OpenClaw SDK.
+// Package managers provides high-level manager components for OpenClaw SDK.
+//
+// This package provides:
+//   - EventManager: Pub/sub event management
+//   - RequestManager: Pending request correlation
+//   - ConnectionManager: WebSocket connection lifecycle
+//   - ReconnectManager: Automatic reconnection with Fibonacci backoff
 package managers
 
 import (
@@ -12,13 +18,13 @@ import (
 	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
-// ClientConfig holds client configuration
+// ClientConfig holds client configuration for ConnectionManager.
 type ClientConfig struct {
-	URL    string
-	Header map[string][]string
+	URL    string              // WebSocket server URL
+	Header map[string][]string // Custom HTTP headers for WebSocket handshake
 }
 
-// NewConnectionManager creates a new connection manager
+// NewConnectionManager creates a new connection manager with the given configuration.
 func NewConnectionManager(ctx context.Context, config *ClientConfig, eventMgr *EventManager) *ConnectionManager {
 	return &ConnectionManager{
 		config:   config,
@@ -28,17 +34,19 @@ func NewConnectionManager(ctx context.Context, config *ClientConfig, eventMgr *E
 	}
 }
 
-// ConnectionManager manages WebSocket connections
+// ConnectionManager manages WebSocket connections.
+// It handles connection lifecycle, state transitions, and transport management.
 type ConnectionManager struct {
-	config    *ClientConfig
-	state     *connection.ConnectionStateMachine
-	transport transport.Transport
-	eventMgr  *EventManager
-	ctx       context.Context
-	mu        sync.Mutex
+	config    *ClientConfig                      // Client configuration
+	state     *connection.ConnectionStateMachine // Connection state machine
+	transport transport.Transport                // Underlying transport
+	eventMgr  *EventManager                      // Event manager for emitting events
+	ctx       context.Context                    // Context for lifecycle
+	mu        sync.Mutex                         // Mutex for thread-safety
 }
 
-// Connect establishes a connection
+// Connect establishes a WebSocket connection to the configured URL.
+// It transitions through states: Disconnected -> Connecting -> Connected.
 func (cm *ConnectionManager) Connect(ctx context.Context) error {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -81,7 +89,8 @@ func (cm *ConnectionManager) Connect(ctx context.Context) error {
 	return nil
 }
 
-// Disconnect closes the connection
+// Disconnect closes the WebSocket connection.
+// It transitions to the Disconnected state and emits a disconnect event.
 func (cm *ConnectionManager) Disconnect() error {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -104,7 +113,7 @@ func (cm *ConnectionManager) Disconnect() error {
 	return err
 }
 
-// State returns the current connection state
+// State returns the current connection state.
 func (cm *ConnectionManager) State() types.ConnectionState {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -114,14 +123,15 @@ func (cm *ConnectionManager) State() types.ConnectionState {
 	return cm.state.State()
 }
 
-// Transport returns the underlying transport
+// Transport returns the underlying transport for sending messages.
 func (cm *ConnectionManager) Transport() transport.Transport {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	return cm.transport
 }
 
-// Close closes the connection manager
+// Close closes the connection manager.
+// It delegates to Disconnect for cleanup.
 func (cm *ConnectionManager) Close() error {
 	return cm.Disconnect()
 }

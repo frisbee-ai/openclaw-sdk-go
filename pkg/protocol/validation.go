@@ -1,3 +1,8 @@
+// Package protocol provides protocol frame types and utilities for OpenClaw SDK.
+//
+// This package provides validation for protocol frames:
+//   - Validator: Validates GatewayFrame, RequestFrame, ResponseFrame, EventFrame
+//   - ValidationError: Structured validation errors with field and message
 package protocol
 
 import (
@@ -5,7 +10,8 @@ import (
 	"strings"
 )
 
-// ValidationError represents a validation error (uses Phase 1 error pattern)
+// ValidationError represents a validation error with field name and message.
+// Used by Validator to provide structured error information.
 type ValidationError struct {
 	Field   string
 	Message string
@@ -15,7 +21,8 @@ func (e *ValidationError) Error() string {
 	return e.Field + ": " + e.Message
 }
 
-// Validator validates protocol frames
+// Validator validates protocol frames.
+// Provides methods to validate each frame type according to protocol rules.
 type Validator struct{}
 
 // NewValidator creates a new validator

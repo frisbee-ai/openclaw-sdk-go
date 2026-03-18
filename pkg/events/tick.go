@@ -1,4 +1,8 @@
 // Package events provides event handling utilities for the OpenClaw SDK.
+//
+// This package provides:
+//   - TickMonitor: Connection heartbeat monitoring with timeout detection
+//   - GapDetector: Message gap detection for ordered message streams
 package events
 
 import (
@@ -7,35 +11,37 @@ import (
 	"time"
 )
 
-// TickMonitor monitors connection heartbeat
+// TickMonitor monitors connection heartbeat.
+// It tracks tick events and detects when expected ticks are not received within the timeout.
 type TickMonitor struct {
-	interval  time.Duration
-	timeout   time.Duration
-	ticker    *time.Ticker
-	timer     *time.Timer
-	tickCh    chan time.Time
-	ctx       context.Context
-	cancel    context.CancelFunc
-	wg        sync.WaitGroup
-	mu        sync.RWMutex
-	onTick    func(time.Time)
-	onTimeout func()
-	running   bool
-	stopped   chan struct{}
+	interval  time.Duration      // Interval between tick events
+	timeout   time.Duration      // Timeout duration
+	ticker    *time.Ticker       // Ticker for periodic ticks
+	timer     *time.Timer        // Timer for timeout detection
+	tickCh    chan time.Time     // Channel for tick events
+	ctx       context.Context    // Context for lifecycle
+	cancel    context.CancelFunc // Cancel function
+	wg        sync.WaitGroup     // WaitGroup for goroutines
+	mu        sync.RWMutex       // Mutex for thread-safety
+	onTick    func(time.Time)    // Callback for tick events
+	onTimeout func()             // Callback for timeout events
+	running   bool               // Flag indicating if monitor is running
+	stopped   chan struct{}      // Channel to signal stop
 }
 
-// ValidationError represents validation failure
+// ValidationError represents validation failure for TickMonitor configuration.
 type ValidationError struct {
-	Field   string
-	Message string
+	Field   string // Field name that failed validation
+	Message string // Validation error message
 }
 
+// Error returns the string representation of the validation error.
 func (e *ValidationError) Error() string {
 	return e.Field + ": " + e.Message
 }
 
-// NewTickMonitor creates a new tick monitor
-// Returns error if interval or timeout is zero or negative
+// NewTickMonitor creates a new tick monitor with the specified interval and timeout.
+// Returns error if interval or timeout is zero or negative.
 func NewTickMonitor(interval time.Duration, timeout time.Duration) (*TickMonitor, error) {
 	if interval <= 0 {
 		return nil, &ValidationError{Field: "interval", Message: "must be positive"}
@@ -57,21 +63,21 @@ func NewTickMonitor(interval time.Duration, timeout time.Duration) (*TickMonitor
 	}, nil
 }
 
-// SetOnTick sets the tick callback (thread-safe)
+// SetOnTick sets the callback function to be called when a tick is received.
 func (tm *TickMonitor) SetOnTick(f func(time.Time)) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 	tm.onTick = f
 }
 
-// SetOnTimeout sets the timeout callback (thread-safe)
+// SetOnTimeout sets the callback function to be called when a timeout occurs.
 func (tm *TickMonitor) SetOnTimeout(f func()) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 	tm.onTimeout = f
 }
 
-// Start begins the tick monitoring
+// Start begins the tick monitoring in a background goroutine.
 func (tm *TickMonitor) Start() {
 	tm.mu.Lock()
 	if tm.running {
@@ -85,7 +91,8 @@ func (tm *TickMonitor) Start() {
 	go tm.run()
 }
 
-// Stop stops the tick monitoring (idempotent)
+// Stop stops the tick monitoring.
+// It is idempotent - calling multiple times is safe.
 func (tm *TickMonitor) Stop() {
 	tm.mu.Lock()
 	if !tm.running {
@@ -115,6 +122,8 @@ func (tm *TickMonitor) Stop() {
 	close(tm.tickCh)
 }
 
+// run is the main monitoring loop.
+// It listens for tick events and timeout events.
 func (tm *TickMonitor) run() {
 	defer tm.wg.Done()
 
@@ -152,12 +161,12 @@ func (tm *TickMonitor) run() {
 	}
 }
 
-// TickChannel returns the tick channel
+// TickChannel returns the channel for receiving tick events.
 func (tm *TickMonitor) TickChannel() <-chan time.Time {
 	return tm.tickCh
 }
 
-// IsRunning returns whether the monitor is running
+// IsRunning returns whether the tick monitor is currently running.
 func (tm *TickMonitor) IsRunning() bool {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()

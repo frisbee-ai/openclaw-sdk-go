@@ -1,3 +1,10 @@
+// Package types provides shared types for the OpenClaw SDK.
+//
+// This package provides logging abstractions:
+//   - Logger interface: For customizable logging implementations
+//   - DefaultLogger: Standard logger using Go's log package
+//   - NopLogger: No-op logger for testing
+//   - Context helpers: WithContext and FromContext for logger injection
 package types
 
 import (
@@ -7,8 +14,9 @@ import (
 	"os"
 )
 
-// Logger interface for customizable logging
-// Follows standard Go logging patterns with level support
+// Logger interface for customizable logging.
+// Follows standard Go logging patterns with level support (Debug, Info, Warn, Error).
+// Implement this interface to use custom logging backends.
 type Logger interface {
 	Debug(msg string, args ...any)
 	Info(msg string, args ...any)

@@ -1,9 +1,15 @@
 // Package types provides shared types for the OpenClaw SDK.
+//
+// This package contains error types following Go best practices:
+//   - Custom error types with error code and cause chain
+//   - Standard errors.Is() and errors.As() compatibility
+//   - Typed errors for different failure categories
 package types
 
 import "errors"
 
-// ErrorCode represents an error code
+// ErrorCode represents an error code for categorizing errors.
+// Used with errors.Is() to check error categories.
 type ErrorCode string
 
 const (
@@ -16,14 +22,16 @@ const (
 	ErrCodeUnknown    ErrorCode = "UNKNOWN"
 )
 
-// OpenClawError is the base error interface
+// OpenClawError is the base error interface for all OpenClaw SDK errors.
+// Provides error code and error chain (cause) for proper error handling.
 type OpenClawError interface {
 	error
 	Code() ErrorCode
 	Unwrap() error
 }
 
-// BaseError is the base error struct
+// BaseError is the base error struct implementing OpenClawError.
+// Contains error code, message, and optional cause (wrapped error).
 type BaseError struct {
 	code    ErrorCode
 	message string
@@ -34,32 +42,38 @@ func (e *BaseError) Error() string   { return e.message }
 func (e *BaseError) Code() ErrorCode { return e.code }
 func (e *BaseError) Unwrap() error   { return e.err }
 
-// ConnectionError represents a connection error
+// ConnectionError represents a connection error.
+// Returned when network connection fails or is lost.
 type ConnectionError struct {
 	*BaseError
 }
 
-// AuthError represents an authentication error
+// AuthError represents an authentication error.
+// Returned when authentication fails or credentials are invalid.
 type AuthError struct {
 	*BaseError
 }
 
-// TimeoutError represents a timeout error
+// TimeoutError represents a timeout error.
+// Returned when operations exceed their time limits.
 type TimeoutError struct {
 	*BaseError
 }
 
-// ProtocolError represents a protocol error
+// ProtocolError represents a protocol error.
+// Returned when protocol-level errors occur (e.g., invalid frame format).
 type ProtocolError struct {
 	*BaseError
 }
 
-// ValidationError represents a validation error
+// ValidationError represents a validation error.
+// Returned when input validation fails (e.g., missing required fields).
 type ValidationError struct {
 	*BaseError
 }
 
-// TransportError represents a transport error
+// TransportError represents a transport error.
+// Returned when the underlying transport (e.g., WebSocket) fails.
 type TransportError struct {
 	*BaseError
 }

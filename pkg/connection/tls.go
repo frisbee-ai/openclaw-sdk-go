@@ -1,4 +1,10 @@
-// pkg/connection/tls.go
+// Package connection provides connection management components for OpenClaw SDK.
+//
+// This package provides:
+//   - ConnectionStateMachine: State machine for managing connection lifecycle
+//   - PolicyManager: Connection policy configuration
+//   - ProtocolNegotiator: Protocol version negotiation
+//   - TLS validation: Certificate and configuration validation
 package connection
 
 import (
@@ -11,37 +17,39 @@ import (
 	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
-// TlsValidator validates TLS certificates
+// TlsValidator validates TLS certificates and configuration.
+// It provides methods to validate TLS settings and build crypto/tls.Config.
 type TlsValidator struct {
-	config *TLSConfig
+	config *TLSConfig // TLS configuration to validate
 }
 
-// TLSConfig holds TLS configuration for connection layer
-// Note: This is distinct from transport.TLSConfig which is for dial-time configuration
-// This version supports certificate loading and validation
+// TLSConfig holds TLS configuration for connection layer.
+// Note: This is distinct from transport.TLSConfig which is for dial-time configuration.
+// This version supports certificate loading and validation.
 type TLSConfig struct {
-	InsecureSkipVerify bool
-	CertFile           string
-	KeyFile            string
-	CAFile             string
-	ServerName         string
+	InsecureSkipVerify bool   // Skip server certificate verification (insecure)
+	CertFile           string // Path to client certificate file
+	KeyFile            string // Path to client key file
+	CAFile             string // Path to CA certificate file
+	ServerName         string // Server name for SNI
 }
 
-// ErrInvalidTLSConfig represents TLS configuration validation errors
+// ErrInvalidTLSConfig represents TLS configuration validation errors.
 var ErrInvalidTLSConfig = errors.New("invalid TLS configuration")
 
-// ErrCertNotFound is returned when certificate file is not found
+// ErrCertNotFound is returned when certificate file is not found.
 var ErrCertNotFound = errors.New("certificate file not found")
 
-// ErrCANotFound is returned when CA file is not found
+// ErrCANotFound is returned when CA file is not found.
 var ErrCANotFound = errors.New("CA certificate file not found")
 
-// NewTlsValidator creates a new TLS validator
+// NewTlsValidator creates a new TLS validator with the given configuration.
 func NewTlsValidator(config *TLSConfig) *TlsValidator {
 	return &TlsValidator{config: config}
 }
 
-// Validate validates the TLS configuration
+// Validate validates the TLS configuration.
+// Checks that required files exist and that certificate/key pairs are complete.
 func (v *TlsValidator) Validate() error {
 	if v.config == nil {
 		return nil // No config is valid (use system defaults)
@@ -71,7 +79,8 @@ func (v *TlsValidator) Validate() error {
 	return nil
 }
 
-// GetTLSConfig returns the TLS config for the connection
+// GetTLSConfig returns the TLS config for the connection.
+// It validates the configuration first, then builds a crypto/tls.Config.
 func (v *TlsValidator) GetTLSConfig() (*tls.Config, error) {
 	// First validate
 	if err := v.Validate(); err != nil {
@@ -111,8 +120,8 @@ func (v *TlsValidator) GetTLSConfig() (*tls.Config, error) {
 	return config, nil
 }
 
-// ValidateCertificate validates the given certificate
-// This is a basic validation - checks expiry and key usage
+// ValidateCertificate validates the given certificate.
+// This is a basic validation that checks expiry dates (NotBefore and NotAfter).
 func ValidateCertificate(cert *x509.Certificate) error {
 	if time.Now().After(cert.NotAfter) {
 		return errors.New("certificate has expired")

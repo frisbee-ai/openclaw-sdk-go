@@ -1,3 +1,28 @@
+// Package openclaw provides the OpenClaw WebSocket SDK for Go.
+//
+// This is the main entry point for the OpenClaw SDK. It provides a client
+// for connecting to WebSocket servers with support for:
+//
+//   - Connection management with automatic state transitions
+//   - Request/response pattern with correlation
+//   - Event subscription and dispatching
+//   - Automatic reconnection with Fibonacci backoff
+//   - TLS/SSL support
+//   - Custom authentication handlers
+//
+// Basic usage:
+//
+//	client, err := openclaw.NewClient(
+//	    openclaw.WithURL("wss://example.com/ws"),
+//	    openclaw.WithAuthHandler(handler),
+//	)
+//	if err != nil {
+//	    // handle error
+//	}
+//	defer client.Close()
+//
+//	err = client.Connect(ctx)
+//	// use client to send requests
 package openclaw
 
 import (
@@ -95,19 +120,21 @@ var (
 	FromContext                = types.FromContext
 )
 
-// ClientConfig holds client configuration
+// ClientConfig holds client configuration for creating an OpenClaw client.
+// It contains all the settings needed to connect to a WebSocket server.
 type ClientConfig struct {
-	URL              string
-	AuthHandler      auth.AuthHandler
-	ReconnectEnabled bool
-	ReconnectConfig  *ReconnectConfig
-	Logger           Logger
-	Header           map[string][]string
-	TLSConfig        *transport.TLSConfig
-	EventBufferSize  int
+	URL              string               // WebSocket server URL (e.g., wss://example.com/ws)
+	AuthHandler      auth.AuthHandler     // Authentication handler
+	ReconnectEnabled bool                 // Enable automatic reconnection
+	ReconnectConfig  *ReconnectConfig     // Reconnection configuration
+	Logger           Logger               // Logger instance for debugging
+	Header           map[string][]string  // Custom HTTP headers for WebSocket handshake
+	TLSConfig        *transport.TLSConfig // TLS/SSL configuration
+	EventBufferSize  int                  // Buffer size for event channel
 }
 
-// DefaultClientConfig returns default configuration
+// DefaultClientConfig returns default client configuration.
+// Default event buffer size is 100, and uses a default logger.
 func DefaultClientConfig() *ClientConfig {
 	return &ClientConfig{
 		EventBufferSize: 100,
@@ -115,10 +142,12 @@ func DefaultClientConfig() *ClientConfig {
 	}
 }
 
-// ClientOption is a functional option
+// ClientOption is a functional option for configuring the client.
+// It modifies the ClientConfig and returns an error if the configuration is invalid.
 type ClientOption func(*ClientConfig) error
 
-// WithURL sets the WebSocket URL
+// WithURL sets the WebSocket URL.
+// Required option for establishing a connection.
 func WithURL(url string) ClientOption {
 	return func(c *ClientConfig) error {
 		c.URL = url
@@ -126,7 +155,7 @@ func WithURL(url string) ClientOption {
 	}
 }
 
-// WithAuthHandler sets the auth handler
+// WithAuthHandler sets the auth handler for authentication.
 func WithAuthHandler(handler auth.AuthHandler) ClientOption {
 	return func(c *ClientConfig) error {
 		c.AuthHandler = handler
@@ -134,7 +163,7 @@ func WithAuthHandler(handler auth.AuthHandler) ClientOption {
 	}
 }
 
-// WithReconnect enables or disables reconnect
+// WithReconnect enables or disables automatic reconnection.
 func WithReconnect(enabled bool) ClientOption {
 	return func(c *ClientConfig) error {
 		c.ReconnectEnabled = enabled
@@ -142,7 +171,7 @@ func WithReconnect(enabled bool) ClientOption {
 	}
 }
 
-// WithReconnectConfig sets the reconnect configuration
+// WithReconnectConfig sets the reconnection configuration.
 func WithReconnectConfig(config *ReconnectConfig) ClientOption {
 	return func(c *ClientConfig) error {
 		c.ReconnectConfig = config
@@ -150,7 +179,7 @@ func WithReconnectConfig(config *ReconnectConfig) ClientOption {
 	}
 }
 
-// WithLogger sets the logger
+// WithLogger sets the logger for debugging output.
 func WithLogger(logger Logger) ClientOption {
 	return func(c *ClientConfig) error {
 		c.Logger = logger
@@ -158,7 +187,7 @@ func WithLogger(logger Logger) ClientOption {
 	}
 }
 
-// WithHeader sets custom headers
+// WithHeader sets custom HTTP headers for the WebSocket handshake.
 func WithHeader(header map[string][]string) ClientOption {
 	return func(c *ClientConfig) error {
 		c.Header = header
@@ -166,7 +195,7 @@ func WithHeader(header map[string][]string) ClientOption {
 	}
 }
 
-// WithTLSConfig sets the TLS configuration
+// WithTLSConfig sets the TLS configuration for secure connections.
 func WithTLSConfig(tlsConfig *transport.TLSConfig) ClientOption {
 	return func(c *ClientConfig) error {
 		c.TLSConfig = tlsConfig
@@ -174,7 +203,8 @@ func WithTLSConfig(tlsConfig *transport.TLSConfig) ClientOption {
 	}
 }
 
-// WithEventBufferSize sets the event buffer size
+// WithEventBufferSize sets the event buffer size.
+// Default is 100.
 func WithEventBufferSize(size int) ClientOption {
 	return func(c *ClientConfig) error {
 		c.EventBufferSize = size
@@ -182,32 +212,44 @@ func WithEventBufferSize(size int) ClientOption {
 	}
 }
 
-// OpenClawClient is the main client interface
+// OpenClawClient is the main client interface for the OpenClaw SDK.
+// It provides methods for connecting, sending requests, and managing events.
 type OpenClawClient interface {
+	// Connect establishes a WebSocket connection to the server.
 	Connect(ctx context.Context) error
+	// Disconnect closes the connection gracefully.
 	Disconnect() error
+	// State returns the current connection state.
 	State() ConnectionState
+	// SendRequest sends a request and waits for a response.
 	SendRequest(ctx context.Context, req *protocol.RequestFrame) (*protocol.ResponseFrame, error)
+	// Events returns the event channel for receiving events.
 	Events() <-chan Event
+	// Subscribe adds an event handler for the specified event type.
+	// Returns an unsubscribe function.
 	Subscribe(eventType EventType, handler EventHandler) func()
+	// Close shuts down the client and releases all resources.
 	Close() error
 }
 
-// client is the concrete implementation
+// client is the concrete implementation of OpenClawClient.
+// It coordinates multiple managers for event handling, request/response, connection, and reconnection.
 type client struct {
 	config   *ClientConfig
 	managers struct {
-		event      *managers.EventManager
-		request    *managers.RequestManager
-		connection *managers.ConnectionManager
-		reconnect  *managers.ReconnectManager
+		event      *managers.EventManager      // Event pub/sub management
+		request    *managers.RequestManager    // Request/response correlation
+		connection *managers.ConnectionManager // WebSocket connection lifecycle
+		reconnect  *managers.ReconnectManager  // Automatic reconnection
 	}
-	ctx    context.Context
-	cancel context.CancelFunc
-	mu     sync.Mutex
+	ctx    context.Context    // Parent context for cancellation
+	cancel context.CancelFunc // Cancel function for parent context
+	mu     sync.Mutex         // Mutex for thread-safe operations
 }
 
-// NewClient creates a new OpenClaw client
+// NewClient creates a new OpenClaw client with the given options.
+// It initializes all managers and returns an error if configuration fails.
+// The client must be closed after use to release resources.
 func NewClient(opts ...ClientOption) (OpenClawClient, error) {
 	cfg := DefaultClientConfig()
 	for _, opt := range opts {
@@ -256,7 +298,8 @@ func NewClient(opts ...ClientOption) (OpenClawClient, error) {
 	return c, nil
 }
 
-// Connect establishes a connection (thread-safe)
+// Connect establishes a WebSocket connection to the server.
+// Thread-safe method that validates URL and initiates connection.
 func (c *client) Connect(ctx context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -272,7 +315,8 @@ func (c *client) Connect(ctx context.Context) error {
 	return err
 }
 
-// Disconnect closes the connection (thread-safe)
+// Disconnect closes the WebSocket connection gracefully.
+// Thread-safe method that stops reconnection before disconnecting.
 func (c *client) Disconnect() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -283,7 +327,8 @@ func (c *client) Disconnect() error {
 	return c.managers.connection.Disconnect()
 }
 
-// State returns the current connection state (thread-safe)
+// State returns the current connection state.
+// Thread-safe method that returns the state from the connection manager.
 func (c *client) State() ConnectionState {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -294,7 +339,8 @@ func (c *client) State() ConnectionState {
 	return c.managers.connection.State()
 }
 
-// SendRequest sends a request (thread-safe)
+// SendRequest sends a request and waits for a response.
+// Thread-safe method that serializes the request and sends it via the transport.
 func (c *client) SendRequest(ctx context.Context, req *protocol.RequestFrame) (*protocol.ResponseFrame, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -313,17 +359,19 @@ func (c *client) SendRequest(ctx context.Context, req *protocol.RequestFrame) (*
 	return c.managers.request.SendRequest(ctx, req, sendFunc)
 }
 
-// Events returns the event channel
+// Events returns the event channel for receiving all events.
 func (c *client) Events() <-chan Event {
 	return c.managers.event.Events()
 }
 
-// Subscribe subscribes to events
+// Subscribe adds an event handler for the specified event type.
+// Returns an unsubscribe function that can be called to remove the handler.
 func (c *client) Subscribe(eventType EventType, handler EventHandler) func() {
 	return c.managers.event.Subscribe(eventType, handler)
 }
 
-// Close closes the client (thread-safe)
+// Close shuts down the client and releases all resources.
+// Thread-safe method that closes all managers in the correct order.
 func (c *client) Close() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
