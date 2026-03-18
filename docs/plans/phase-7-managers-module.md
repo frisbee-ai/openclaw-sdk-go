@@ -457,21 +457,14 @@ import (
 )
 
 // ReconnectConfig holds reconnection configuration
-type ReconnectConfig struct {
-	MaxAttempts      int
-	InitialDelay     time.Duration
-	MaxDelay         time.Duration
-	BackoffMultiplier float64
-}
+// Note: Uses openclaw.ReconnectConfig from Phase 1
+// This is just an alias for documentation purposes
+type ReconnectConfig = openclaw.ReconnectConfig
 
 // DefaultReconnectConfig returns default configuration
 func DefaultReconnectConfig() *ReconnectConfig {
-	return &ReconnectConfig{
-		MaxAttempts:      0,
-		InitialDelay:     1 * time.Second,
-		MaxDelay:         60 * time.Second,
-		BackoffMultiplier: 1.618,
-	}
+	cfg := openclaw.DefaultReconnectConfig()
+	return &cfg
 }
 
 // ReconnectManager handles automatic reconnection
