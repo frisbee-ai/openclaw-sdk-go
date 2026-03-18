@@ -16,6 +16,7 @@ package openclaw
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	"time"
 
@@ -124,10 +125,24 @@ func NewClient(opts ...ClientOption) (OpenClawClient, error) {
 	// Initialize managers
 	c.managers.event = managers.NewEventManager(ctx, cfg.EventBufferSize)
 	c.managers.request = managers.NewRequestManager(ctx)
-	c.managers.connection = managers.NewConnectionManager(cfg, c.managers.event)
+	c.managers.connection = managers.NewConnectionManager(ctx, &managers.ClientConfig{
+		URL:    cfg.URL,
+		Header: cfg.Header,
+	}, c.managers.event)
 
 	if cfg.ReconnectEnabled {
 		c.managers.reconnect = managers.NewReconnectManager(cfg.ReconnectConfig)
+		// Set up reconnect callbacks
+		c.managers.reconnect.SetOnReconnect(func() error {
+			return c.managers.connection.Connect(ctx)
+		})
+		c.managers.reconnect.SetOnReconnectFailed(func(err error) {
+			c.managers.event.Emit(Event{
+				Type:      EventError,
+				Err:       err,
+				Timestamp: time.Now(),
+			})
+		})
 	}
 
 	c.managers.event.Start()
@@ -135,24 +150,61 @@ func NewClient(opts ...ClientOption) (OpenClawClient, error) {
 	return c, nil
 }
 
-// Connect establishes a connection
+// Connect establishes a connection (thread-safe)
 func (c *client) Connect(ctx context.Context) error {
-	return c.managers.connection.Connect(ctx)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.config.URL == "" {
+		return NewValidationError("URL is required", nil)
+	}
+
+	err := c.managers.connection.Connect(ctx)
+	if err == nil && c.managers.reconnect != nil {
+		c.managers.reconnect.Start()
+	}
+	return err
 }
 
-// Disconnect closes the connection
+// Disconnect closes the connection (thread-safe)
 func (c *client) Disconnect() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.managers.reconnect != nil {
+		c.managers.reconnect.Stop()
+	}
 	return c.managers.connection.Disconnect()
 }
 
-// State returns the current connection state
+// State returns the current connection state (thread-safe)
 func (c *client) State() ConnectionState {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.managers.connection == nil {
+		return StateDisconnected
+	}
 	return c.managers.connection.State()
 }
 
-// SendRequest sends a request
+// SendRequest sends a request (thread-safe)
 func (c *client) SendRequest(ctx context.Context, req *protocol.RequestFrame) (*protocol.ResponseFrame, error) {
-	return c.managers.request.SendRequest(ctx, req)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.managers.connection == nil {
+		return nil, NewConnectionError("not connected", nil)
+	}
+
+	sendFunc := func(r *protocol.RequestFrame) error {
+		data, err := json.Marshal(r)
+		if err != nil {
+			return err
+		}
+		return c.managers.connection.Transport().Send(data)
+	}
+	return c.managers.request.SendRequest(ctx, req, sendFunc)
 }
 
 // Events returns the event channel
@@ -165,12 +217,27 @@ func (c *client) Subscribe(eventType EventType, handler EventHandler) func() {
 	return c.managers.event.Subscribe(eventType, handler)
 }
 
-// Close closes the client
+// Close closes the client (thread-safe)
 func (c *client) Close() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	c.cancel()
-	c.managers.event.Close()
-	c.managers.request.Close()
-	return c.managers.connection.Close()
+
+	if c.managers.event != nil {
+		c.managers.event.Close()
+	}
+	if c.managers.request != nil {
+		c.managers.request.Close()
+	}
+	if c.managers.connection != nil {
+		c.managers.connection.Close()
+	}
+	if c.managers.reconnect != nil {
+		c.managers.reconnect.Stop()
+	}
+
+	return nil
 }
 ```
 
