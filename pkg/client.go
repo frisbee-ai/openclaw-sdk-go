@@ -10,6 +10,89 @@ import (
 	"github.com/i0r3k/openclaw-sdk-go/pkg/managers"
 	"github.com/i0r3k/openclaw-sdk-go/pkg/protocol"
 	"github.com/i0r3k/openclaw-sdk-go/pkg/transport"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
+)
+
+// Re-export types from pkg/types for convenience
+type ConnectionState = types.ConnectionState
+type EventType = types.EventType
+type Event = types.Event
+type EventHandler = types.EventHandler
+type ReconnectConfig = types.ReconnectConfig
+
+// Re-export state constants
+const (
+	StateDisconnected   = types.StateDisconnected
+	StateConnecting     = types.StateConnecting
+	StateConnected      = types.StateConnected
+	StateAuthenticating = types.StateAuthenticating
+	StateAuthenticated  = types.StateAuthenticated
+	StateReconnecting   = types.StateReconnecting
+	StateFailed         = types.StateFailed
+)
+
+// Re-export event constants
+const (
+	EventConnect     = types.EventConnect
+	EventDisconnect  = types.EventDisconnect
+	EventError       = types.EventError
+	EventMessage     = types.EventMessage
+	EventRequest     = types.EventRequest
+	EventResponse    = types.EventResponse
+	EventTick        = types.EventTick
+	EventGap         = types.EventGap
+	EventStateChange = types.EventStateChange
+)
+
+// Re-export DefaultReconnectConfig function
+var DefaultReconnectConfig = types.DefaultReconnectConfig
+
+// Re-export error types from pkg/types for convenience
+type ErrorCode = types.ErrorCode
+type OpenClawError = types.OpenClawError
+type BaseError = types.BaseError
+type ConnectionError = types.ConnectionError
+type AuthError = types.AuthError
+type TimeoutError = types.TimeoutError
+type ProtocolError = types.ProtocolError
+type ValidationError = types.ValidationError
+type TransportError = types.TransportError
+
+// Re-export error code constants
+const (
+	ErrCodeConnection  = types.ErrCodeConnection
+	ErrCodeAuth       = types.ErrCodeAuth
+	ErrCodeTimeout    = types.ErrCodeTimeout
+	ErrCodeProtocol   = types.ErrCodeProtocol
+	ErrCodeValidation = types.ErrCodeValidation
+	ErrCodeTransport  = types.ErrCodeTransport
+	ErrCodeUnknown    = types.ErrCodeUnknown
+)
+
+// Re-export error constructors
+var (
+	NewError           = types.NewError
+	NewConnectionError = types.NewConnectionError
+	NewAuthError       = types.NewAuthError
+	NewTimeoutError    = types.NewTimeoutError
+	NewProtocolError   = types.NewProtocolError
+	NewValidationError = types.NewValidationError
+	NewTransportError  = types.NewTransportError
+	Is                 = types.Is
+	As                 = types.As
+)
+
+// Re-export logger types and functions from pkg/types for convenience
+type Logger = types.Logger
+type DefaultLogger = types.DefaultLogger
+type NopLogger = types.NopLogger
+
+// Re-export logger functions
+var (
+	NewDefaultLogger         = types.NewDefaultLogger
+	NewDefaultLoggerWithWriter = types.NewDefaultLoggerWithWriter
+	WithContext             = types.WithContext
+	FromContext             = types.FromContext
 )
 
 // ClientConfig holds client configuration

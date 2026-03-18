@@ -12,6 +12,7 @@ import (
 
 	openclaw "github.com/i0r3k/openclaw-sdk-go/pkg"
 	"github.com/i0r3k/openclaw-sdk-go/pkg/protocol"
+	"github.com/i0r3k/openclaw-sdk-go/pkg/types"
 )
 
 func main() {
@@ -26,13 +27,13 @@ func main() {
 	defer client.Close()
 
 	// Subscribe to connection events
-	client.Subscribe(openclaw.EventConnect, func(e openclaw.Event) {
+	client.Subscribe(types.EventConnect, func(e types.Event) {
 		fmt.Println("✓ Connected to server!")
 	})
-	client.Subscribe(openclaw.EventDisconnect, func(e openclaw.Event) {
+	client.Subscribe(types.EventDisconnect, func(e types.Event) {
 		fmt.Println("✗ Disconnected from server")
 	})
-	client.Subscribe(openclaw.EventError, func(e openclaw.Event) {
+	client.Subscribe(types.EventError, func(e types.Event) {
 		fmt.Printf("✗ Error: %v\n", e.Err)
 	})
 
