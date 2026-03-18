@@ -23,7 +23,7 @@ import (
 	"context"
 
 	"openclaw-sdk-go"
-	"openclaw-sdk-go/protocol"
+	"github.com/i0r3k/openclaw-sdk-go/protocol"
 	"openclaw-sdk-go/transport"
 )
 
@@ -275,7 +275,7 @@ import (
 	"sync"
 	"time"
 
-	"openclaw-sdk-go/protocol"
+	"github.com/i0r3k/openclaw-sdk-go/protocol"
 )
 
 // RequestManager manages pending requests
@@ -384,7 +384,7 @@ import (
 	"testing"
 	"time"
 
-	"openclaw-sdk-go/protocol"
+	"github.com/i0r3k/openclaw-sdk-go/protocol"
 )
 
 func TestRequestManager_SendAndReceive(t *testing.T) {

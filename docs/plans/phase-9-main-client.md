@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"openclaw-sdk-go/managers"
-	"openclaw-sdk-go/protocol"
+	"github.com/i0r3k/openclaw-sdk-go/protocol"
 	"openclaw-sdk-go/transport"
 )
 

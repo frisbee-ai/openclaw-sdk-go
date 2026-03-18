@@ -30,7 +30,7 @@ import (
 	"time"
 
 	openclaw "github.com/i0r3k/openclaw-sdk-go"
-	"openclaw-sdk-go/protocol"
+	"github.com/i0r3k/openclaw-sdk-go/protocol"
 )
 
 func main() {
