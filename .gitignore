@@ -37,5 +37,9 @@ coverage.txt
 # Build output
 dist/
 
+# Example binaries
+examples/*/cli-example
+examples/*/echo-server
+
 # AI
 .omc/
