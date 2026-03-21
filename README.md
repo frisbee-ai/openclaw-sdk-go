@@ -12,13 +12,17 @@ OpenClaw SDK Go is a Go implementation migrated from the TypeScript version, pro
 ## Features
 
 - **Connection Management** - Automatic connection state management with disconnect handling
-- **Event System** - Publish/subscribe pattern for event handling
+- **Event System** - Publish/subscribe pattern for event handling with backpressure timeout
 - **Request/Response** - Automatic request-response correlation with timeout support
 - **Auto-Reconnect** - Intelligent reconnection with Fibonacci backoff
-- **TLS Support** - Configurable TLS connection options
-- **Thread-Safe** - All public APIs are concurrency-safe
+- **TLS Support** - Configurable TLS connection options with certificate validation
+- **Thread-Safe** - All public APIs are concurrency-safe with proper lock management
 - **Context Support** - Full `context.Context` integration for cancellation and timeouts
 - **Extensible Logging** - Built-in logger interface with custom implementation support
+- **Protocol Validation** - Inbound payload size validation against server policy
+- **Tick Monitoring** - Heartbeat monitoring with stale event detection
+- **Gap Detection** - Event sequence gap detection for reliable message delivery
+- **Multiple API Namespaces** - Complete coverage of OpenClaw protocol APIs (agent, browser, chat, config, cron, doctor, logs, push, secrets, sessions, skills, talk, tts, update, weblogin, wizard)
 
 ## Installation
 
@@ -140,13 +144,16 @@ client, err := openclaw.NewClient(
 | Option | Type | Description |
 |--------|------|-------------|
 | `WithURL(url string)` | string | WebSocket server URL |
+| `WithClientID(id string)` | string | Client identifier (required for server connection) |
 | `WithAuthHandler(handler)` | AuthHandler | Authentication handler |
+| `WithCredentialsProvider(p CredentialsProvider)` | CredentialsProvider | Credentials provider interface |
 | `WithReconnect(enabled bool)` | bool | Enable auto-reconnect |
 | `WithReconnectConfig(cfg)` | *ReconnectConfig | Reconnect configuration |
 | `WithLogger(logger)` | Logger | Custom logger |
 | `WithHeader(header)` | map[string][]string | Custom HTTP headers |
 | `WithTLSConfig(cfg)` | *TLSConfig | TLS configuration |
 | `WithEventBufferSize(n)` | int | Event buffer size |
+| `WithEventEmitTimeout(t)` | time.Duration | Timeout for Emit when channel is full (default 200ms) |
 
 ### Connection States
 
@@ -237,6 +244,9 @@ go test ./pkg/transport
 
 # Run single test
 go test -run TestWebSocketTransportDial ./pkg/transport
+
+# Run tests with race detector
+go test -race ./...
 ```
 
 ### Code Quality
