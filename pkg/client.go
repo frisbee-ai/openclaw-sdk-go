@@ -295,14 +295,13 @@ type client struct {
 		reconnect  *managers.ReconnectManager  // Automatic reconnection
 	}
 	// New fields for Phase 6.1
-	protocolNegotiator *connection.ProtocolNegotiator     // Protocol version negotiation
-	policyManager      *connection.PolicyManager          // Server policy management
-	tickMonitor        *events.TickMonitor                // Heartbeat monitoring
-	gapDetector        *events.GapDetector                // Event sequence gap detection
-	serverInfo         *connection.HelloOk                // Server info from handshake
-	snapshot           *connection.Snapshot               // Server snapshot
-	stateMachine       *connection.ConnectionStateMachine // Connection state validation
-	tickHandlerUnsub   func()                             // Unsubscribe function for tick handler
+	protocolNegotiator *connection.ProtocolNegotiator // Protocol version negotiation
+	policyManager      *connection.PolicyManager      // Server policy management
+	tickMonitor        *events.TickMonitor            // Heartbeat monitoring
+	gapDetector        *events.GapDetector            // Event sequence gap detection
+	serverInfo         *connection.HelloOk            // Server info from handshake
+	snapshot           *connection.Snapshot           // Server snapshot
+	tickHandlerUnsub   func()                         // Unsubscribe function for tick handler
 	// API namespaces
 	chatAPI          *api.ChatAPI
 	agentsAPI        *api.AgentsAPI
@@ -350,9 +349,6 @@ func NewClient(opts ...ClientOption) (OpenClawClient, error) {
 
 	// Initialize policy manager
 	c.policyManager = connection.NewPolicyManager()
-
-	// Initialize state machine
-	c.stateMachine = connection.NewConnectionStateMachine(types.StateDisconnected)
 
 	// Set up connection event handlers
 	c.setupConnectionHandlers()
@@ -488,11 +484,6 @@ func (c *client) Disconnect() error {
 	}
 	c.serverInfo = nil
 	c.snapshot = nil
-
-	// Clear state machine
-	if c.stateMachine != nil {
-		c.stateMachine.Reset()
-	}
 
 	return c.managers.connection.Disconnect()
 }
