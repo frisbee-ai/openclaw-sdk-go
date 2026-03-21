@@ -61,7 +61,8 @@ go mod verify
 
 ```
 pkg/
-├── client.go          # Main client API with option pattern configuration
+├── api/              # API types and helpers
+├── client.go         # Main client API with option pattern configuration
 ├── types/             # Shared types (ConnectionState, Event, errors, Logger)
 ├── auth/              # Authentication (CredentialsProvider, AuthHandler)
 ├── transport/         # WebSocket transport layer (gorilla/websocket)
@@ -120,6 +121,21 @@ The project uses pre-commit hooks configured in `.pre-commit-config.yaml`:
 - `go-vet`: Static analysis
 - `golangci-lint`: Fast Go linters with auto-fix
 - `go-test`: Run all tests
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `pkg/client.go` | Main SDK entry point, exports all public types |
+| `pkg/client_test.go` | Client integration tests |
+| `pkg/connection/` | Connection state machine and TLS validation |
+| `pkg/managers/` | Event, request, connection, reconnect managers |
+
+## Gotchas
+
+- **Channel + Lock Rule**: Never send to a channel while holding a lock. Release lock BEFORE sending.
+- **Buffered Channels**: All event channels are buffered to prevent deadlocks.
+- **Feature Parity**: This SDK is functionally equivalent to TypeScript SDK but not API-identical.
 
 ## Migration Context
 
