@@ -82,6 +82,7 @@ func TestSecurity_ConcurrentAccess(t *testing.T) {
 func TestSecurity_ConcurrentConnectDisconnect(t *testing.T) {
 	client, err := NewClient(
 		WithURL("ws://localhost:9999"), // Non-existent server
+		WithClientID("test-client"),
 		WithReconnect(false),
 	)
 	if err != nil {

@@ -95,6 +95,22 @@ func TestClientConnectWithoutURL(t *testing.T) {
 	}
 }
 
+func TestClientConnectWithoutClientID(t *testing.T) {
+	client, err := NewClient(WithURL("ws://localhost:8080"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	defer func() {
+		_ = client.Close()
+	}()
+
+	ctx := context.Background()
+	err = client.Connect(ctx)
+	if err == nil {
+		t.Error("expected error when connecting without ClientID")
+	}
+}
+
 func TestClientState(t *testing.T) {
 	client, err := NewClient()
 	if err != nil {

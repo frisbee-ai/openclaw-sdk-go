@@ -194,6 +194,15 @@ func WithURL(url string) ClientOption {
 	}
 }
 
+// WithClientID sets the client identifier.
+// Required for establishing a connection with the server.
+func WithClientID(id string) ClientOption {
+	return func(c *ClientConfig) error {
+		c.ClientID = id
+		return nil
+	}
+}
+
 // WithAuthHandler sets the auth handler for authentication.
 func WithAuthHandler(handler auth.AuthHandler) ClientOption {
 	return func(c *ClientConfig) error {
