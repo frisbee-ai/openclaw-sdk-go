@@ -101,6 +101,9 @@ const (
 // ============================================================================
 
 // ErrorShape represents the error structure from wire protocol.
+// Note: This mirrors protocol.ErrorShape but uses 'any' for Details
+// to support runtime-constructed errors (not just wire-deserialized ones).
+// protocol.ErrorShape uses json.RawMessage for wire-level JSON handling.
 type ErrorShape struct {
 	Code         string `json:"code"`
 	Message      string `json:"message"`

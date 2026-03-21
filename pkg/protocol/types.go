@@ -68,6 +68,9 @@ type StateVersion struct {
 }
 
 // ErrorShape represents an error in a response or event.
+// Note: This is the wire-level type using json.RawMessage for Details.
+// types.ErrorShape mirrors this but uses 'any' for Details to support
+// runtime-constructed errors. Both types are intentionally separate.
 // Wire format: {"code":"ERROR_CODE","message":"human readable","details":{},"retryable":true,"retryAfterMs":5000}
 type ErrorShape struct {
 	Code         string          `json:"code"`
