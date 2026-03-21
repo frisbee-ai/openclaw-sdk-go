@@ -745,10 +745,11 @@ func (c *client) processServerInfo() {
 }
 
 // generateRequestID generates a unique request ID using crypto/rand.
+// Uses a stack-allocated array to avoid heap allocation for the buffer.
 func generateRequestID() string {
-	b := make([]byte, 16)
-	_, _ = rand.Read(b)
-	return "req-" + hex.EncodeToString(b)
+	var buf [16]byte
+	_, _ = rand.Read(buf[:])
+	return "req-" + hex.EncodeToString(buf[:])
 }
 
 // Close shuts down the client and releases all resources.

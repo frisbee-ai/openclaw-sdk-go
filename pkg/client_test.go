@@ -306,10 +306,16 @@ func TestWithTLSConfig(t *testing.T) {
 	}
 }
 
+func BenchmarkGenerateRequestID(b *testing.B) {
+	for b.Loop() {
+		_ = generateRequestID()
+	}
+}
+
 func TestGenerateRequestID(t *testing.T) {
 	// Generate multiple IDs and verify they're unique
 	ids := make(map[string]bool)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		id := generateRequestID()
 		if ids[id] {
 			t.Errorf("duplicate request ID generated: %s", id)
