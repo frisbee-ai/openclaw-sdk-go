@@ -77,7 +77,8 @@ type WebSocketTransport struct {
 // Dial creates a new WebSocket connection.
 // It establishes a WebSocket connection to the specified URL with the given headers and configuration.
 // Returns a WebSocketTransport ready to be started, or an error if the connection fails.
-func Dial(url string, header http.Header, config *WebSocketConfig) (*WebSocketTransport, error) {
+// The context is used to cancel the entire dial operation including DNS lookup, TCP connection, and handshake.
+func Dial(ctx context.Context, url string, header http.Header, config *WebSocketConfig) (*WebSocketTransport, error) {
 	// Apply defaults
 	readBufSize := 4096
 	writeBufSize := 4096
@@ -119,13 +120,13 @@ func Dial(url string, header http.Header, config *WebSocketConfig) (*WebSocketTr
 		dialer.TLSClientConfig = tlsClientConfig
 	}
 
-	conn, _, err := dialer.Dial(url, header)
+	conn, _, err := dialer.DialContext(ctx, url, header)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create transport struct first (needed for close handler)
-	ctx, cancel := context.WithCancel(context.Background())
+	transportCtx, cancel := context.WithCancel(context.Background())
 
 	// Set default timeouts if not configured
 	readTimeout := 30 * time.Second
@@ -148,7 +149,7 @@ func Dial(url string, header http.Header, config *WebSocketConfig) (*WebSocketTr
 		sendCh:       make(chan []byte, channelBufSize),
 		recvCh:       make(chan []byte, channelBufSize),
 		errCh:        make(chan error, channelBufSize),
-		ctx:          ctx,
+		ctx:          transportCtx,
 		cancel:       cancel,
 		readTimeout:  readTimeout,
 		writeTimeout: writeTimeout,

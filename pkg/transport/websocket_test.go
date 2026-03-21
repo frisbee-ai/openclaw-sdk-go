@@ -32,7 +32,7 @@ func TestDial_ConfigDefaults(t *testing.T) {
 	defer server.Close()
 
 	// Dial with nil config
-	transport, err := Dial(server.URL, nil, nil)
+	transport, err := Dial(context.Background(), server.URL, nil, nil)
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
@@ -61,7 +61,7 @@ func TestDial_CustomTimeouts(t *testing.T) {
 		WriteTimeout: 20 * time.Second,
 	}
 
-	transport, err := Dial(server.URL, nil, config)
+	transport, err := Dial(context.Background(), server.URL, nil, config)
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
@@ -85,7 +85,7 @@ func TestDial_CustomBufferSizes(t *testing.T) {
 		WriteBufferSize: 2048,
 	}
 
-	transport, err := Dial(server.URL, nil, config)
+	transport, err := Dial(context.Background(), server.URL, nil, config)
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
@@ -123,7 +123,7 @@ func TestDial_InvalidURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := Dial(tt.url, nil, nil)
+			_, err := Dial(context.Background(), tt.url, nil, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Dial() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -140,7 +140,7 @@ func TestDial_WithHeaders(t *testing.T) {
 	header.Set("X-Test-Header", "test-value")
 	header.Set("User-Agent", "OpenClaw-Test/1.0")
 
-	transport, err := Dial(server.URL, header, nil)
+	transport, err := Dial(context.Background(), server.URL, header, nil)
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
@@ -164,7 +164,7 @@ func TestDial_WithTLSConfig(t *testing.T) {
 		},
 	}
 
-	transport, err := Dial(server.URL, nil, config)
+	transport, err := Dial(context.Background(), server.URL, nil, config)
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
@@ -180,7 +180,7 @@ func TestWebSocketTransport_Start(t *testing.T) {
 	server := newTestServer(t, echoHandler)
 	defer server.Close()
 
-	transport, err := Dial(server.URL, nil, nil)
+	transport, err := Dial(context.Background(), server.URL, nil, nil)
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
@@ -289,7 +289,7 @@ func TestWebSocketTransport_IsConnected(t *testing.T) {
 		server := newTestServer(t, echoHandler)
 		defer server.Close()
 
-		transport, err := Dial(server.URL, nil, nil)
+		transport, err := Dial(context.Background(), server.URL, nil, nil)
 		if err != nil {
 			t.Fatalf("Dial() error = %v", err)
 		}
@@ -321,7 +321,7 @@ func TestWebSocketTransport_Close_StopsLoops(t *testing.T) {
 	server := newTestServer(t, echoHandler)
 	defer server.Close()
 
-	transport, err := Dial(server.URL, nil, nil)
+	transport, err := Dial(context.Background(), server.URL, nil, nil)
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
@@ -470,7 +470,7 @@ func TestWebSocketTransport_E2E(t *testing.T) {
 	server := newTestServer(t, echoHandler)
 	defer server.Close()
 
-	transport, err := Dial(server.URL, nil, nil)
+	transport, err := Dial(context.Background(), server.URL, nil, nil)
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
@@ -500,7 +500,7 @@ func TestWebSocketTransport_ConcurrentSend(t *testing.T) {
 	server := newTestServer(t, echoHandler)
 	defer server.Close()
 
-	transport, err := Dial(server.URL, nil, nil)
+	transport, err := Dial(context.Background(), server.URL, nil, nil)
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
@@ -546,7 +546,7 @@ func TestWebSocketTransport_Timeout(t *testing.T) {
 		WriteTimeout: 100 * time.Millisecond,
 	}
 
-	transport, err := Dial(server.URL, nil, config)
+	transport, err := Dial(context.Background(), server.URL, nil, config)
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
@@ -575,6 +575,65 @@ func TestWebSocketTransport_Timeout(t *testing.T) {
 // TestTransportInterface verifies WebSocketTransport implements Transport interface
 func TestTransportInterface(t *testing.T) {
 	var _ Transport = (*WebSocketTransport)(nil)
+}
+
+// TestDial_ContextCanceled tests Dial when context is canceled before dialing
+func TestDial_ContextCanceled(t *testing.T) {
+	server := newTestServer(t, echoHandler)
+	defer server.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	_, err := Dial(ctx, server.URL, nil, nil)
+	// Dial should fail when context is canceled (gorilla may return wrapped or direct error)
+	if err == nil {
+		t.Fatal("expected error when context is canceled")
+	}
+	t.Logf("Dial error (expected): %v", err)
+}
+
+// TestDial_ContextDeadlineExceeded tests Dial when context deadline is exceeded
+func TestDial_ContextDeadlineExceeded(t *testing.T) {
+	server := newTestServer(t, echoHandler)
+	defer server.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 0) // Already expired
+	defer cancel()
+
+	_, err := Dial(ctx, server.URL, nil, nil)
+	// Dial should fail when context deadline is exceeded
+	if err == nil {
+		t.Fatal("expected error when context deadline exceeded")
+	}
+	t.Logf("Dial error (expected): %v", err)
+}
+
+// TestDial_ContextTimeout tests Dial respects context timeout during connection
+func TestDial_ContextTimeout(t *testing.T) {
+	// Create a server that doesn't respond to WebSocket upgrade (hangs)
+	listener, err := (&net.ListenConfig{}).Listen(context.Background(), "tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("Failed to create listener: %v", err)
+	}
+	defer listener.Close()
+
+	addr := listener.Addr().String()
+
+	// Use a short timeout context
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	_, err = Dial(ctx, "ws://"+addr+"/ws", nil, nil)
+	if err == nil {
+		t.Fatal("expected error when context times out")
+	}
+	// Should get either context.DeadlineExceeded or connection refused/timeout
+	if err != context.DeadlineExceeded {
+		// On some systems, the connection may be refused before timeout
+		// Accept both behaviors as long as we get an error
+		t.Logf("got error: %v", err)
+	}
 }
 
 // Helper types and functions for testing

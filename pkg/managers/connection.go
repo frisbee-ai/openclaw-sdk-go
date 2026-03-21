@@ -70,7 +70,7 @@ func (cm *ConnectionManager) Connect(ctx context.Context) error {
 		}
 	}
 
-	t, err := transport.Dial(cm.config.URL, header, nil)
+	t, err := transport.Dial(ctx, cm.config.URL, header, nil)
 	if err != nil {
 		if transitionErr := cm.state.Transition(types.StateFailed, err); transitionErr != nil {
 			err = errors.Join(err, transitionErr)
