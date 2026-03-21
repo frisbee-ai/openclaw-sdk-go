@@ -30,6 +30,7 @@ type EventManager struct {
 	logger      types.Logger                                      // Logger for error reporting
 	nextID      uint64                                            // Next handler ID for unique keys
 	emitTimeout time.Duration                                     // Timeout for Emit operations
+	emitTimer   *time.Timer                                       // Reusable timer for Emit backpressure
 }
 
 // NewEventManager creates a new event manager with the specified buffer size.
@@ -47,6 +48,7 @@ func NewEventManager(ctx context.Context, bufferSize int, emitTimeout time.Durat
 		cancel:      cancel,
 		logger:      logger,
 		emitTimeout: emitTimeout,
+		emitTimer:   time.NewTimer(emitTimeout),
 	}
 }
 
@@ -85,10 +87,20 @@ func (em *EventManager) Events() <-chan types.Event {
 // Emit emits an event to the event channel.
 // It blocks for up to emitTimeout when the channel is full before dropping the event.
 func (em *EventManager) Emit(event types.Event) {
+	// Reset timer before use — safe even if already stopped or expired
+	if !em.emitTimer.Stop() {
+		// Drain channel if timer already fired
+		select {
+		case <-em.emitTimer.C:
+		default:
+		}
+	}
+	em.emitTimer.Reset(em.emitTimeout)
+
 	select {
 	case em.events <- event:
 	case <-em.ctx.Done():
-	case <-time.After(em.emitTimeout):
+	case <-em.emitTimer.C:
 		em.logger.Warn("event channel full, dropping event", "type", event.Type)
 	}
 }
@@ -151,6 +163,7 @@ func (em *EventManager) Close() error {
 	em.closed = true
 	em.closedMu.Unlock()
 
+	em.emitTimer.Stop()
 	em.cancel()
 	em.wg.Wait()
 	close(em.events)
