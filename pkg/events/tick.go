@@ -135,8 +135,8 @@ func (tm *TickMonitor) GetTimeSinceLastTick() int64 {
 
 // GetStaleDuration returns milliseconds in stale state, 0 if not stale.
 func (tm *TickMonitor) GetStaleDuration() int64 {
-	tm.mu.RLock()
-	defer tm.mu.RUnlock()
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 	if !tm.isStaleLocked() {
 		return 0
 	}
