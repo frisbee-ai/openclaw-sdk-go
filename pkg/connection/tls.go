@@ -250,6 +250,11 @@ func ValidateCertificateChain(cert *x509.Certificate, caPool *x509.CertPool) err
 // CheckCertificateRevocation checks if a certificate has been revoked.
 // Note: This requires access to CRL or OCSP responders.
 // In production, this should be configured with proper CRL/OCSP endpoints.
+//
+// TODO: Implement actual CRL/OCSP checking.
+// - For CRL: Fetch and parse CRL from cert.CRLDistributionPoints
+// - For OCSP: Perform OCSP check using cert.OCSPServer
+// - Consider caching revocation status to avoid repeated network calls
 func CheckCertificateRevocation(cert *x509.Certificate, _ *x509.RevocationList) error {
 	if cert == nil {
 		return errors.New("certificate is nil")
