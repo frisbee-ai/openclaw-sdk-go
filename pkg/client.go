@@ -377,7 +377,7 @@ func NewClient(opts ...ClientOption) (OpenClawClient, error) {
 		c.managers.reconnect = managers.NewReconnectManager(reconnectConfig)
 		// Set up reconnect callbacks
 		c.managers.reconnect.SetOnReconnect(func() error {
-			return c.managers.connection.Connect(ctx)
+			return c.managers.connection.Reconnect(ctx)
 		})
 		c.managers.reconnect.SetOnReconnectFailed(func(err error) {
 			c.managers.event.Emit(Event{

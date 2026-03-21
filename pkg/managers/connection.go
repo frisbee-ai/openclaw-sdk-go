@@ -226,3 +226,17 @@ func (cm *ConnectionManager) Transport() transport.Transport {
 func (cm *ConnectionManager) Close() error {
 	return cm.Disconnect()
 }
+
+// Reconnect reconnects using the stored connection parameters.
+// Used by the reconnect manager to re-establish authenticated connections.
+func (cm *ConnectionManager) Reconnect(ctx context.Context) error {
+	cm.mu.Lock()
+	params := cm.connectParams
+	cm.mu.Unlock()
+
+	if params == nil {
+		// No stored params — fall back to basic connect
+		return cm.Connect(ctx)
+	}
+	return cm.ConnectWithParams(ctx, params)
+}
