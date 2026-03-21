@@ -310,6 +310,573 @@ func TestDevicePairingAPI_List(t *testing.T) {
 	}
 }
 
+// --- AgentsAPI Tests (continued) ---
+
+func TestAgentsAPI_Wait(t *testing.T) {
+	api := NewAgentsAPI(mockRequest(nil, nil))
+	err := api.Wait(context.Background(), protocol.AgentWaitParams{AgentID: "agent-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestAgentsAPI_Create(t *testing.T) {
+	resp := json.RawMessage(`{"agentId":"new-agent"}`)
+	api := NewAgentsAPI(mockRequest(resp, nil))
+	result, err := api.Create(context.Background(), protocol.AgentsCreateParams{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.AgentID != "new-agent" {
+		t.Errorf("expected new-agent, got %s", result.AgentID)
+	}
+}
+
+func TestAgentsAPI_Update(t *testing.T) {
+	resp := json.RawMessage(`{"agentId":"agent-1"}`)
+	api := NewAgentsAPI(mockRequest(resp, nil))
+	result, err := api.Update(context.Background(), protocol.AgentsUpdateParams{AgentID: "agent-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.AgentID != "agent-1" {
+		t.Errorf("expected agent-1, got %s", result.AgentID)
+	}
+}
+
+func TestAgentsAPI_Delete(t *testing.T) {
+	resp := json.RawMessage(`{"agentId":"agent-1"}`)
+	api := NewAgentsAPI(mockRequest(resp, nil))
+	result, err := api.Delete(context.Background(), protocol.AgentsDeleteParams{AgentID: "agent-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.AgentID != "agent-1" {
+		t.Errorf("expected agent-1, got %s", result.AgentID)
+	}
+}
+
+func TestAgentsAPI_Files_Get(t *testing.T) {
+	resp := json.RawMessage(`{"content":"file content"}`)
+	api := NewAgentsAPI(mockRequest(resp, nil))
+	filesAPI := api.Files()
+	result, err := filesAPI.Get(context.Background(), protocol.AgentsFilesGetParams{AgentID: "agent-1", Path: "/test.txt"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Content != "file content" {
+		t.Errorf("expected 'file content', got %s", result.Content)
+	}
+}
+
+func TestAgentsAPI_Files_Set(t *testing.T) {
+	resp := json.RawMessage(`{}`)
+	api := NewAgentsAPI(mockRequest(resp, nil))
+	filesAPI := api.Files()
+	_, err := filesAPI.Set(context.Background(), protocol.AgentsFilesSetParams{AgentID: "agent-1", Path: "/test.txt", Content: "file content"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// --- SessionsAPI Tests (continued) ---
+
+func TestSessionsAPI_Preview(t *testing.T) {
+	resp := json.RawMessage(`{"preview":"preview text"}`)
+	api := NewSessionsAPI(mockRequest(resp, nil))
+	result, err := api.Preview(context.Background(), protocol.SessionsPreviewParams{SessionID: "s1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Preview != "preview text" {
+		t.Errorf("expected 'preview text', got %s", result.Preview)
+	}
+}
+
+func TestSessionsAPI_Resolve(t *testing.T) {
+	api := NewSessionsAPI(mockRequest(nil, nil))
+	err := api.Resolve(context.Background(), protocol.SessionsResolveParams{SessionID: "s1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSessionsAPI_Patch(t *testing.T) {
+	api := NewSessionsAPI(mockRequest(nil, nil))
+	err := api.Patch(context.Background(), protocol.SessionsPatchParams{SessionID: "s1", Patch: "some patch"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSessionsAPI_Reset(t *testing.T) {
+	api := NewSessionsAPI(mockRequest(nil, nil))
+	err := api.Reset(context.Background(), protocol.SessionsResetParams{SessionID: "s1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSessionsAPI_Delete(t *testing.T) {
+	api := NewSessionsAPI(mockRequest(nil, nil))
+	err := api.Delete(context.Background(), protocol.SessionsDeleteParams{SessionID: "s1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSessionsAPI_Compact(t *testing.T) {
+	api := NewSessionsAPI(mockRequest(nil, nil))
+	err := api.Compact(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// --- CronAPI Tests (continued) ---
+
+func TestCronAPI_Add(t *testing.T) {
+	api := NewCronAPI(mockRequest(nil, nil))
+	err := api.Add(context.Background(), protocol.CronAddParams{Prompt: "test prompt", Cron: "* * * * *"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestCronAPI_Update(t *testing.T) {
+	api := NewCronAPI(mockRequest(nil, nil))
+	err := api.Update(context.Background(), protocol.CronUpdateParams{JobID: "job1", Cron: "0 * * * *"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestCronAPI_Remove(t *testing.T) {
+	api := NewCronAPI(mockRequest(nil, nil))
+	err := api.Remove(context.Background(), protocol.CronRemoveParams{JobID: "job1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestCronAPI_Run(t *testing.T) {
+	api := NewCronAPI(mockRequest(nil, nil))
+	err := api.Run(context.Background(), protocol.CronRunParams{JobID: "job1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestCronAPI_Runs(t *testing.T) {
+	resp := json.RawMessage(`[{"timestamp":1234567890}]`)
+	api := NewCronAPI(mockRequest(resp, nil))
+	result, err := api.Runs(context.Background(), protocol.CronRunsParams{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result) != 1 {
+		t.Errorf("expected 1 run log entry, got %d", len(result))
+	}
+	if result[0].Timestamp != 1234567890 {
+		t.Errorf("expected 1234567890, got %d", result[0].Timestamp)
+	}
+}
+
+// --- NodesAPI Tests (continued) ---
+
+func TestNodesAPI_Invoke(t *testing.T) {
+	resp := json.RawMessage(`{"result":"success"}`)
+	api := NewNodesAPI(mockRequest(resp, nil))
+	result, err := api.Invoke(context.Background(), protocol.NodeInvokeParams{NodeID: "node-1", Target: "test.target"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if string(result) != `{"result":"success"}` {
+		t.Errorf("unexpected result: %s", string(result))
+	}
+}
+
+func TestNodesAPI_Event(t *testing.T) {
+	api := NewNodesAPI(mockRequest(nil, nil))
+	err := api.Event(context.Background(), protocol.NodeEventParams{NodeID: "node-1", Event: "test.event", Payload: map[string]any{"key": "value"}})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestNodesAPI_PendingDrain(t *testing.T) {
+	resp := json.RawMessage(`{"items":[]}`)
+	api := NewNodesAPI(mockRequest(resp, nil))
+	result, err := api.PendingDrain(context.Background(), protocol.NodePendingDrainParams{NodeID: "node-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Items == nil {
+		t.Error("expected items to not be nil")
+	}
+}
+
+func TestNodesAPI_PendingEnqueue(t *testing.T) {
+	api := NewNodesAPI(mockRequest(nil, nil))
+	err := api.PendingEnqueue(context.Background(), protocol.NodePendingEnqueueParams{NodeID: "node-1", Item: map[string]any{"data": "test"}})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestNodesAPI_Pairing_Approve(t *testing.T) {
+	api := NewNodesAPI(mockRequest(nil, nil))
+	pairingAPI := api.Pairing()
+	err := pairingAPI.Approve(context.Background(), protocol.NodePairApproveParams{NodeID: "node-1", PairingID: "pair-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestNodesAPI_Pairing_Reject(t *testing.T) {
+	api := NewNodesAPI(mockRequest(nil, nil))
+	pairingAPI := api.Pairing()
+	err := pairingAPI.Reject(context.Background(), protocol.NodePairRejectParams{NodeID: "node-1", PairingID: "pair-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestNodesAPI_Pairing_Verify(t *testing.T) {
+	api := NewNodesAPI(mockRequest(nil, nil))
+	pairingAPI := api.Pairing()
+	err := pairingAPI.Verify(context.Background(), protocol.NodePairVerifyParams{NodeID: "node-1", PairingID: "pair-1", Code: "123456"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// --- SkillsAPI Tests (continued) ---
+
+func TestSkillsAPI_Status(t *testing.T) {
+	resp := json.RawMessage(`{"status":"running","skills":["skill1","skill2"]}`)
+	api := NewSkillsAPI(mockRequest(resp, nil))
+	result, err := api.Status(context.Background(), protocol.SkillsStatusParams{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if string(result) != `{"status":"running","skills":["skill1","skill2"]}` {
+		t.Errorf("unexpected result: %s", string(result))
+	}
+}
+
+func TestSkillsAPI_Install(t *testing.T) {
+	api := NewSkillsAPI(mockRequest(nil, nil))
+	err := api.Install(context.Background(), protocol.SkillsInstallParams{SkillID: "skill-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSkillsAPI_Update(t *testing.T) {
+	api := NewSkillsAPI(mockRequest(nil, nil))
+	err := api.Update(context.Background(), protocol.SkillsUpdateParams{SkillID: "skill-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// --- ConfigAPI Tests (continued) ---
+
+func TestConfigAPI_Get(t *testing.T) {
+	resp := json.RawMessage(`{"key":"value"}`)
+	api := NewConfigAPI(mockRequest(resp, nil))
+	result, err := api.Get(context.Background(), protocol.ConfigGetParams{Key: "test.key"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if string(result) != `{"key":"value"}` {
+		t.Errorf("unexpected result: %s", string(result))
+	}
+}
+
+func TestConfigAPI_Set(t *testing.T) {
+	api := NewConfigAPI(mockRequest(nil, nil))
+	err := api.Set(context.Background(), protocol.ConfigSetParams{Key: "test.key", Value: "new value"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestConfigAPI_Apply(t *testing.T) {
+	api := NewConfigAPI(mockRequest(nil, nil))
+	err := api.Apply(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestConfigAPI_Patch(t *testing.T) {
+	api := NewConfigAPI(mockRequest(nil, nil))
+	err := api.Patch(context.Background(), protocol.ConfigPatchParams{Patches: []protocol.ConfigPatchOp{{Op: "replace", Path: "/key", Value: "new value"}}})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// --- Error Handling Tests ---
+
+func TestAgentsAPI_Error(t *testing.T) {
+	api := NewAgentsAPI(mockRequest(nil, errors.New("agents error")))
+	_, err := api.List(context.Background())
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if err.Error() != "agents error" {
+		t.Errorf("expected 'agents error', got %s", err.Error())
+	}
+}
+
+func TestAgentsAPI_Create_Error(t *testing.T) {
+	api := NewAgentsAPI(mockRequest(nil, errors.New("create failed")))
+	_, err := api.Create(context.Background(), protocol.AgentsCreateParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestAgentsAPI_Update_Error(t *testing.T) {
+	api := NewAgentsAPI(mockRequest(nil, errors.New("update failed")))
+	_, err := api.Update(context.Background(), protocol.AgentsUpdateParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestAgentsAPI_Delete_Error(t *testing.T) {
+	api := NewAgentsAPI(mockRequest(nil, errors.New("delete failed")))
+	_, err := api.Delete(context.Background(), protocol.AgentsDeleteParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestAgentsAPI_Files_Get_Error(t *testing.T) {
+	api := NewAgentsAPI(mockRequest(nil, errors.New("get failed")))
+	filesAPI := api.Files()
+	_, err := filesAPI.Get(context.Background(), protocol.AgentsFilesGetParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestAgentsAPI_Files_Set_Error(t *testing.T) {
+	api := NewAgentsAPI(mockRequest(nil, errors.New("set failed")))
+	filesAPI := api.Files()
+	_, err := filesAPI.Set(context.Background(), protocol.AgentsFilesSetParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestSessionsAPI_Preview_Error(t *testing.T) {
+	api := NewSessionsAPI(mockRequest(nil, errors.New("preview failed")))
+	_, err := api.Preview(context.Background(), protocol.SessionsPreviewParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestSessionsAPI_Resolve_Error(t *testing.T) {
+	api := NewSessionsAPI(mockRequest(nil, errors.New("resolve failed")))
+	err := api.Resolve(context.Background(), protocol.SessionsResolveParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestSessionsAPI_Patch_Error(t *testing.T) {
+	api := NewSessionsAPI(mockRequest(nil, errors.New("patch failed")))
+	err := api.Patch(context.Background(), protocol.SessionsPatchParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestSessionsAPI_Reset_Error(t *testing.T) {
+	api := NewSessionsAPI(mockRequest(nil, errors.New("reset failed")))
+	err := api.Reset(context.Background(), protocol.SessionsResetParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestSessionsAPI_Delete_Error(t *testing.T) {
+	api := NewSessionsAPI(mockRequest(nil, errors.New("delete failed")))
+	err := api.Delete(context.Background(), protocol.SessionsDeleteParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestSessionsAPI_Compact_Error(t *testing.T) {
+	api := NewSessionsAPI(mockRequest(nil, errors.New("compact failed")))
+	err := api.Compact(context.Background())
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestCronAPI_Add_Error(t *testing.T) {
+	api := NewCronAPI(mockRequest(nil, errors.New("add failed")))
+	err := api.Add(context.Background(), protocol.CronAddParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestCronAPI_Update_Error(t *testing.T) {
+	api := NewCronAPI(mockRequest(nil, errors.New("update failed")))
+	err := api.Update(context.Background(), protocol.CronUpdateParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestCronAPI_Remove_Error(t *testing.T) {
+	api := NewCronAPI(mockRequest(nil, errors.New("remove failed")))
+	err := api.Remove(context.Background(), protocol.CronRemoveParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestCronAPI_Run_Error(t *testing.T) {
+	api := NewCronAPI(mockRequest(nil, errors.New("run failed")))
+	err := api.Run(context.Background(), protocol.CronRunParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestCronAPI_Runs_Error(t *testing.T) {
+	api := NewCronAPI(mockRequest(nil, errors.New("runs failed")))
+	_, err := api.Runs(context.Background(), protocol.CronRunsParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestNodesAPI_Invoke_Error(t *testing.T) {
+	api := NewNodesAPI(mockRequest(nil, errors.New("invoke failed")))
+	_, err := api.Invoke(context.Background(), protocol.NodeInvokeParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestNodesAPI_Event_Error(t *testing.T) {
+	api := NewNodesAPI(mockRequest(nil, errors.New("event failed")))
+	err := api.Event(context.Background(), protocol.NodeEventParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestNodesAPI_PendingDrain_Error(t *testing.T) {
+	api := NewNodesAPI(mockRequest(nil, errors.New("drain failed")))
+	_, err := api.PendingDrain(context.Background(), protocol.NodePendingDrainParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestNodesAPI_PendingEnqueue_Error(t *testing.T) {
+	api := NewNodesAPI(mockRequest(nil, errors.New("enqueue failed")))
+	err := api.PendingEnqueue(context.Background(), protocol.NodePendingEnqueueParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestNodesAPI_Pairing_Approve_Error(t *testing.T) {
+	api := NewNodesAPI(mockRequest(nil, errors.New("approve failed")))
+	pairingAPI := api.Pairing()
+	err := pairingAPI.Approve(context.Background(), protocol.NodePairApproveParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestNodesAPI_Pairing_Reject_Error(t *testing.T) {
+	api := NewNodesAPI(mockRequest(nil, errors.New("reject failed")))
+	pairingAPI := api.Pairing()
+	err := pairingAPI.Reject(context.Background(), protocol.NodePairRejectParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestNodesAPI_Pairing_Verify_Error(t *testing.T) {
+	api := NewNodesAPI(mockRequest(nil, errors.New("verify failed")))
+	pairingAPI := api.Pairing()
+	err := pairingAPI.Verify(context.Background(), protocol.NodePairVerifyParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestSkillsAPI_Status_Error(t *testing.T) {
+	api := NewSkillsAPI(mockRequest(nil, errors.New("status failed")))
+	_, err := api.Status(context.Background(), protocol.SkillsStatusParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestSkillsAPI_Install_Error(t *testing.T) {
+	api := NewSkillsAPI(mockRequest(nil, errors.New("install failed")))
+	err := api.Install(context.Background(), protocol.SkillsInstallParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestSkillsAPI_Update_Error(t *testing.T) {
+	api := NewSkillsAPI(mockRequest(nil, errors.New("update failed")))
+	err := api.Update(context.Background(), protocol.SkillsUpdateParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestConfigAPI_Get_Error(t *testing.T) {
+	api := NewConfigAPI(mockRequest(nil, errors.New("get failed")))
+	_, err := api.Get(context.Background(), protocol.ConfigGetParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestConfigAPI_Set_Error(t *testing.T) {
+	api := NewConfigAPI(mockRequest(nil, errors.New("set failed")))
+	err := api.Set(context.Background(), protocol.ConfigSetParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestConfigAPI_Apply_Error(t *testing.T) {
+	api := NewConfigAPI(mockRequest(nil, errors.New("apply failed")))
+	err := api.Apply(context.Background())
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestConfigAPI_Patch_Error(t *testing.T) {
+	api := NewConfigAPI(mockRequest(nil, errors.New("patch failed")))
+	err := api.Patch(context.Background(), protocol.ConfigPatchParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
 // --- Method Routing Tests ---
 
 func TestAPI_MethodRouting(t *testing.T) {

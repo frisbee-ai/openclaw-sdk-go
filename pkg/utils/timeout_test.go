@@ -30,6 +30,26 @@ func TestWithTimeout_Default(t *testing.T) {
 	}
 }
 
+func TestWithTimeout_ZeroDefault(t *testing.T) {
+	tm := NewTimeoutManager(0) // Zero timeout
+	ctx, cancel := tm.WithTimeout(context.Background())
+	defer cancel()
+
+	if ctx == nil {
+		t.Error("expected non-nil context")
+	}
+}
+
+func TestWithCustomTimeout_Positive(t *testing.T) {
+	tm := NewTimeoutManager(10 * time.Second)
+	ctx, cancel := tm.WithCustomTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if ctx == nil {
+		t.Error("expected non-nil context")
+	}
+}
+
 func TestWithCustomTimeout_Negative(t *testing.T) {
 	tm := NewTimeoutManager(10 * time.Second)
 	ctx, cancel := tm.WithCustomTimeout(context.Background(), -5*time.Second)

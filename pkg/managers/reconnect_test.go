@@ -152,3 +152,85 @@ func TestReconnectManager_FibonacciBackoff(t *testing.T) {
 		t.Errorf("Fibonacci backoff should allow multiple attempts, got %d", attemptCount)
 	}
 }
+
+func TestReconnectManager_Reset(t *testing.T) {
+	config := DefaultReconnectConfig()
+	config.MaxAttempts = 3
+	config.InitialDelay = 10 * time.Millisecond
+
+	rm := NewReconnectManager(config)
+
+	// Reset is a no-op - calling it should not panic
+	// Attempts are tracked in the run() loop, not persisted
+	rm.Reset()
+
+	// Start and let it run a bit
+	rm.SetOnReconnect(func() error {
+		return &testError{msg: "connection failed"}
+	})
+	rm.Start()
+	time.Sleep(30 * time.Millisecond)
+
+	// Reset again while running - still a no-op
+	rm.Reset()
+
+	rm.Stop()
+}
+
+func TestReconnectManager_SetOnReconnect(t *testing.T) {
+	config := DefaultReconnectConfig()
+	config.InitialDelay = 1 * time.Millisecond
+	rm := NewReconnectManager(config)
+
+	var called bool
+	rm.SetOnReconnect(func() error {
+		called = true
+		return nil
+	})
+
+	rm.mu.Lock()
+	callback := rm.onReconnect
+	rm.mu.Unlock()
+
+	if callback == nil {
+		t.Error("expected onReconnect to be set")
+	}
+
+	rm.Start()
+	time.Sleep(50 * time.Millisecond)
+	rm.Stop()
+
+	if !called {
+		t.Error("expected reconnect callback to be called")
+	}
+}
+
+func TestReconnectManager_SetOnReconnectFailed(t *testing.T) {
+	config := DefaultReconnectConfig()
+	config.InitialDelay = 1 * time.Millisecond
+	rm := NewReconnectManager(config)
+
+	var failedErr error
+	rm.SetOnReconnectFailed(func(err error) {
+		failedErr = err
+	})
+
+	rm.mu.Lock()
+	callback := rm.onReconnectFailed
+	rm.mu.Unlock()
+
+	if callback == nil {
+		t.Error("expected onReconnectFailed to be set")
+	}
+
+	rm.SetOnReconnect(func() error {
+		return &testError{msg: "test error"}
+	})
+	rm.Start()
+	time.Sleep(50 * time.Millisecond)
+	rm.Stop()
+
+	if failedErr == nil {
+		t.Error("expected failed callback to be called")
+	}
+}

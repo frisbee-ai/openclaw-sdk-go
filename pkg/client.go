@@ -517,7 +517,7 @@ func (c *client) SendRequest(ctx context.Context, req *protocol.RequestFrame) (*
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if c.managers.connection == nil {
+	if c.managers.connection == nil || c.managers.connection.Transport() == nil {
 		return nil, NewConnectionError("NOT_CONNECTED", "not connected", false, nil)
 	}
 

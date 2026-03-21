@@ -280,3 +280,29 @@ func TestEventManager_NilHandler(t *testing.T) {
 
 	_ = em.Close()
 }
+
+func TestEventManager_Events(t *testing.T) {
+	ctx := context.Background()
+	em := NewEventManager(ctx, 10)
+
+	// Events() should return the event channel
+	ch := em.Events()
+	if ch == nil {
+		t.Error("expected non-nil channel from Events()")
+	}
+
+	_ = em.Close()
+}
+
+func TestEventManager_EventsAfterClose(t *testing.T) {
+	ctx := context.Background()
+	em := NewEventManager(ctx, 10)
+	em.Start()
+	_ = em.Close()
+
+	// Events() should still return a valid channel after close (may be closed)
+	ch := em.Events()
+	if ch == nil {
+		t.Error("expected non-nil channel from Events() after close")
+	}
+}

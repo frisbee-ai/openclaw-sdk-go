@@ -21,6 +21,42 @@ func TestDefaultLogger(t *testing.T) {
 	}
 }
 
+func TestNewDefaultLogger(t *testing.T) {
+	logger := NewDefaultLogger()
+	if logger == nil {
+		t.Fatal("expected non-nil logger")
+	}
+
+	// Verify it implements Logger interface
+	var _ Logger = logger
+
+	// Verify internal loggers are not nil
+	if logger.debug == nil {
+		t.Error("expected debug logger to be non-nil")
+	}
+	if logger.info == nil {
+		t.Error("expected info logger to be non-nil")
+	}
+	if logger.warn == nil {
+		t.Error("expected warn logger to be non-nil")
+	}
+	if logger.error == nil {
+		t.Error("expected error logger to be non-nil")
+	}
+
+	// Methods should not panic
+	logger.Debug("debug")
+	logger.Info("info")
+	logger.Warn("warn")
+	logger.Error("error")
+
+	// With formatting args
+	logger.Debug("debug %s %d", "arg", 123)
+	logger.Info("info %s %d", "arg", 123)
+	logger.Warn("warn %s %d", "arg", 123)
+	logger.Error("error %s %d", "arg", 123)
+}
+
 func TestNopLogger(t *testing.T) {
 	logger := &NopLogger{}
 	// Should not panic
