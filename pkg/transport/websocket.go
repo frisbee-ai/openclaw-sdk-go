@@ -31,6 +31,7 @@ type WebSocketConfig struct {
 	EnableCompression bool          // Enable per-message compression
 	ReadTimeout       time.Duration // Read timeout (default 30s)
 	WriteTimeout      time.Duration // Write timeout (default 10s)
+	ChannelBufferSize int           // Size of internal send/recv channels (default 64)
 }
 
 // TLSConfig holds TLS configuration for transport layer.
@@ -129,6 +130,7 @@ func Dial(url string, header http.Header, config *WebSocketConfig) (*WebSocketTr
 	// Set default timeouts if not configured
 	readTimeout := 30 * time.Second
 	writeTimeout := 10 * time.Second
+	channelBufSize := 64
 	if config != nil {
 		if config.ReadTimeout > 0 {
 			readTimeout = config.ReadTimeout
@@ -136,13 +138,16 @@ func Dial(url string, header http.Header, config *WebSocketConfig) (*WebSocketTr
 		if config.WriteTimeout > 0 {
 			writeTimeout = config.WriteTimeout
 		}
+		if config.ChannelBufferSize > 0 {
+			channelBufSize = config.ChannelBufferSize
+		}
 	}
 
 	t := &WebSocketTransport{
 		conn:         conn,
-		sendCh:       make(chan []byte, 10),
-		recvCh:       make(chan []byte, 10),
-		errCh:        make(chan error, 10),
+		sendCh:       make(chan []byte, channelBufSize),
+		recvCh:       make(chan []byte, channelBufSize),
+		errCh:        make(chan error, channelBufSize),
 		ctx:          ctx,
 		cancel:       cancel,
 		readTimeout:  readTimeout,
