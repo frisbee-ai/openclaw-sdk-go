@@ -22,12 +22,6 @@ gomod:
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
-# Changelog - use git-cliff for rich formatted output
-changelog:
-  # Use git-cliff to generate changelog with emoji prefixes and grouped sections
-  command: git-cliff --configuration cliff.toml --unreleased --tag {{ if .Env.GITHUB_REF_NAME }}{{ .Env.GITHUB_REF_NAME }}{{ else }}{{ .Tag }}{{ end }}
-  env:
-    - GITHUB_REF_NAME
 
 # Release configuration
 release:
