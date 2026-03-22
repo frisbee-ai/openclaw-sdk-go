@@ -20,7 +20,8 @@ gomod:
 
 # Skip build, as this's a library project
 builds:
-  skip: true
+  - id: go-build
+    skip: true
 
 # Snapshots (for testing)
 snapshot:
