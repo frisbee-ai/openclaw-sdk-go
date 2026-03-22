@@ -18,41 +18,16 @@ gomod:
   proxy: true
   mod: mod
 
+# Skip build, as this's a library project
+build:
+  skip: true
+
 # Snapshots (for testing)
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
-
 
 # Release configuration
 release:
   prerelease: auto
   mode: replace
   replace_existing_artifacts: true
-
-# Source distribution
-source:
-  enabled: true
-  name_template: '{{ .ProjectName }}-{{ .Version }}-source'
-
-# Announcement (optional)
-announce:
-  discord:
-    enabled: false
-  mastodon:
-    enabled: false
-  reddit:
-    enabled: false
-  slack:
-    enabled: false
-  smtp:
-    enabled: false
-  teams:
-    enabled: false
-  telegram:
-    enabled: false
-  twitter:
-    enabled: false
-
-# Nightly releases (optional - requires separate configuration)
-# nightly:
-#   publish_release: false
