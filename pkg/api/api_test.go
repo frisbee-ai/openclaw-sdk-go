@@ -872,3 +872,288 @@ func TestAPI_MethodRouting(t *testing.T) {
 		t.Error("expected error for unknown method")
 	}
 }
+
+// --- BrowserAPI Tests ---
+
+func TestBrowserAPI_Open(t *testing.T) {
+	resp := json.RawMessage(`{"tabId":"tab-1","url":"https://example.com"}`)
+	api := NewBrowserAPI(mockRequest(resp, nil))
+
+	result, err := api.Open(context.Background(), protocol.BrowserOpenParams{URL: "https://example.com"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.TabID != "tab-1" {
+		t.Errorf("expected tab-1, got %s", result.TabID)
+	}
+}
+
+func TestBrowserAPI_List(t *testing.T) {
+	resp := json.RawMessage(`{"tabs":[{"tabId":"tab-1"},{"tabId":"tab-2"}]}`)
+	api := NewBrowserAPI(mockRequest(resp, nil))
+
+	result, err := api.List(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Tabs) != 2 {
+		t.Errorf("expected 2 tabs, got %d", len(result.Tabs))
+	}
+}
+
+func TestBrowserAPI_Error(t *testing.T) {
+	api := NewBrowserAPI(mockRequest(nil, errors.New("browser error")))
+
+	_, err := api.Open(context.Background(), protocol.BrowserOpenParams{URL: "https://example.com"})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+// --- ChannelsAPI Tests ---
+
+func TestChannelsAPI_Status(t *testing.T) {
+	resp := json.RawMessage(`{"channels":[{"id":"ch-1","status":"online"}]}`)
+	api := NewChannelsAPI(mockRequest(resp, nil))
+
+	result, err := api.Status(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Channels) != 1 {
+		t.Errorf("expected 1 channel, got %d", len(result.Channels))
+	}
+}
+
+func TestChannelsAPI_TalkStart(t *testing.T) {
+	resp := json.RawMessage(`{"sessionId":"session-1"}`)
+	api := NewChannelsAPI(mockRequest(resp, nil))
+
+	result, err := api.TalkStart(context.Background(), protocol.TalkStartParams{Language: "en"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.SessionID != "session-1" {
+		t.Errorf("expected session-1, got %s", result.SessionID)
+	}
+}
+
+func TestChannelsAPI_Logout(t *testing.T) {
+	api := NewChannelsAPI(mockRequest(nil, nil))
+
+	err := api.Logout(context.Background(), protocol.ChannelsLogoutParams{ChannelID: "ch-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// --- ExecApprovalsAPI Tests ---
+
+func TestExecApprovalsAPI_Get(t *testing.T) {
+	resp := json.RawMessage(`{"approvals":[{"id":"app-1","status":"pending"}]}`)
+	api := NewExecApprovalsAPI(mockRequest(resp, nil))
+
+	result, err := api.Get(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Approvals) != 1 {
+		t.Errorf("expected 1 approval, got %d", len(result.Approvals))
+	}
+}
+
+func TestExecApprovalsAPI_Set(t *testing.T) {
+	api := NewExecApprovalsAPI(mockRequest(nil, nil))
+
+	err := api.Set(context.Background(), protocol.ExecApprovalsSetParams{Enabled: true})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestExecApprovalsAPI_NodeGet(t *testing.T) {
+	api := NewExecApprovalsAPI(mockRequest(nil, nil))
+
+	err := api.NodeGet(context.Background(), protocol.ExecApprovalsNodeGetParams{NodeID: "node-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// --- PushAPI Tests ---
+
+func TestPushAPI_Register(t *testing.T) {
+	api := NewPushAPI(mockRequest(nil, nil))
+
+	_, err := api.Register(context.Background(), protocol.PushRegisterParams{Token: "token-123", Platform: "ios"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestPushAPI_Unregister(t *testing.T) {
+	api := NewPushAPI(mockRequest(nil, nil))
+
+	_, err := api.Unregister(context.Background(), protocol.PushUnregisterParams{Token: "token-123"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestPushAPI_Send(t *testing.T) {
+	api := NewPushAPI(mockRequest(nil, nil))
+
+	_, err := api.Send(context.Background(), protocol.PushSendParams{Target: "user-1", Title: "Test", Body: "Hello"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// --- SecretsAPI Tests ---
+
+func TestSecretsAPI_Reload(t *testing.T) {
+	api := NewSecretsAPI(mockRequest(nil, nil))
+
+	err := api.Reload(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSecretsAPI_Resolve(t *testing.T) {
+	resp := json.RawMessage(`{"value":"secret-value"}`)
+	api := NewSecretsAPI(mockRequest(resp, nil))
+
+	result, err := api.Resolve(context.Background(), struct {
+		Ref string `json:"ref"`
+	}{Ref: "ref-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result["value"] != "secret-value" {
+		t.Errorf("expected secret-value, got %v", result["value"])
+	}
+}
+
+// --- SystemAPI Tests ---
+
+func TestSystemAPI_Health(t *testing.T) {
+	resp := json.RawMessage(`{"status":"healthy","uptime":12345}`)
+	api := NewSystemAPI(mockRequest(resp, nil))
+
+	result, err := api.Health(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result["status"] != "healthy" {
+		t.Errorf("expected healthy, got %v", result["status"])
+	}
+}
+
+func TestSystemAPI_Status(t *testing.T) {
+	resp := json.RawMessage(`{"version":"1.0.0"}`)
+	api := NewSystemAPI(mockRequest(resp, nil))
+
+	result, err := api.Status(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result["version"] != "1.0.0" {
+		t.Errorf("expected 1.0.0, got %v", result["version"])
+	}
+}
+
+func TestSystemAPI_LogsTail(t *testing.T) {
+	resp := json.RawMessage(`{"logs":["log1","log2"]}`)
+	api := NewSystemAPI(mockRequest(resp, nil))
+
+	result, err := api.LogsTail(context.Background(), protocol.LogsTailParams{Lines: 10})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Logs) != 2 {
+		t.Errorf("expected 2 logs, got %d", len(result.Logs))
+	}
+}
+
+func TestSystemAPI_Speak(t *testing.T) {
+	resp := json.RawMessage(`{"audioUrl":"https://example.com/audio.mp3","durationMs":1234}`)
+	api := NewSystemAPI(mockRequest(resp, nil))
+
+	result, err := api.Speak(context.Background(), protocol.TtsSpeakParams{Text: "Hello"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.AudioURL != "https://example.com/audio.mp3" {
+		t.Errorf("expected audio URL, got %s", result.AudioURL)
+	}
+}
+
+func TestSystemAPI_Voices(t *testing.T) {
+	resp := json.RawMessage(`{"voices":[{"id":"voice-1","name":"Default"}]}`)
+	api := NewSystemAPI(mockRequest(resp, nil))
+
+	result, err := api.Voices(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Voices) != 1 {
+		t.Errorf("expected 1 voice, got %d", len(result.Voices))
+	}
+}
+
+func TestSystemAPI_WizardNext(t *testing.T) {
+	resp := json.RawMessage(`{"step":{"id":"auth"},"complete":false}`)
+	api := NewSystemAPI(mockRequest(resp, nil))
+
+	result, err := api.WizardNext(context.Background(), protocol.WizardNextParams{WizardID: "wiz-1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Step.ID != "auth" {
+		t.Errorf("expected auth step, got %s", result.Step.ID)
+	}
+}
+
+func TestSystemAPI_WizardStart(t *testing.T) {
+	resp := json.RawMessage(`{"step":{"id":"start"},"complete":false}`)
+	api := NewSystemAPI(mockRequest(resp, nil))
+
+	result, err := api.WizardStart(context.Background(), protocol.WizardStartParams{WizardID: "test-wizard"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Step.ID != "start" {
+		t.Errorf("expected start step, got %s", result.Step.ID)
+	}
+}
+
+// --- UsageAPI Tests ---
+
+func TestUsageAPI_Status(t *testing.T) {
+	resp := json.RawMessage(`{"requests":100,"tokens":1000}`)
+	api := NewUsageAPI(mockRequest(resp, nil))
+
+	result, err := api.Status(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result["requests"] != float64(100) {
+		t.Errorf("expected 100 requests, got %v", result["requests"])
+	}
+}
+
+func TestUsageAPI_Cost(t *testing.T) {
+	resp := json.RawMessage(`{"total":1.23,"currency":"USD"}`)
+	api := NewUsageAPI(mockRequest(resp, nil))
+
+	result, err := api.Cost(context.Background(), struct {
+		Period string `json:"period,omitempty"`
+	}{Period: "month"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result["total"] != float64(1.23) {
+		t.Errorf("expected 1.23, got %v", result["total"])
+	}
+}
