@@ -271,6 +271,24 @@ func WithEventEmitTimeout(timeout time.Duration) ClientOption {
 	}
 }
 
+// WithTickMonitor sets the tick monitor configuration for heartbeat monitoring.
+// When configured, the client will automatically monitor connection health.
+func WithTickMonitor(config *TickMonitorConfig) ClientOption {
+	return func(c *ClientConfig) error {
+		c.TickMonitor = config
+		return nil
+	}
+}
+
+// WithGapDetector sets the gap detector configuration for message sequence tracking.
+// When configured, the client will detect gaps in ordered message streams.
+func WithGapDetector(config *GapDetectorConfig) ClientOption {
+	return func(c *ClientConfig) error {
+		c.GapDetector = config
+		return nil
+	}
+}
+
 // OpenClawClient is the main client interface for the OpenClaw SDK.
 // It provides methods for connecting, sending requests, and managing events.
 type OpenClawClient interface {

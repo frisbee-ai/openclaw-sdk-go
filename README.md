@@ -22,7 +22,7 @@ OpenClaw SDK Go is a Go implementation migrated from the TypeScript version, pro
 - **Protocol Validation** - Inbound payload size validation against server policy
 - **Tick Monitoring** - Heartbeat monitoring with stale event detection
 - **Gap Detection** - Event sequence gap detection for reliable message delivery
-- **Multiple API Namespaces** - Complete coverage of OpenClaw protocol APIs (agent, browser, chat, config, cron, doctor, logs, push, secrets, sessions, skills, talk, tts, update, weblogin, wizard)
+- **Multiple API Namespaces** - Complete coverage of OpenClaw protocol APIs across 16 modules: Agents, Browser, Channels, Chat, Config, Cron, DevicePairing, ExecApprovals, Nodes, Push, Secrets, Sessions, Skills, System, and Usage
 
 ## Installation
 
@@ -137,6 +137,161 @@ client, err := openclaw.NewClient(
 )
 ```
 
+### Authentication
+
+The SDK supports multiple authentication methods:
+
+#### 1. Using AuthHandler (Dynamic Authentication)
+
+```go
+import "github.com/frisbee-ai/openclaw-sdk-go/pkg/auth"
+
+handler, _ := auth.NewStaticAuthHandler(map[string]string{
+    "token": "your-auth-token",
+})
+
+client, err := openclaw.NewClient(
+    openclaw.WithURL("wss://api.example.com/ws"),
+    openclaw.WithClientID("my-client"),
+    openclaw.WithAuthHandler(handler),
+)
+```
+
+#### 2. Using CredentialsProvider (Advanced)
+
+For dynamic credential refresh or custom credential sources:
+
+```go
+type MyCredentialsProvider struct{}
+
+func (p *MyCredentialsProvider) GetCredentials() (map[string]string, error) {
+    // Fetch credentials from your source (database, API, vault, etc.)
+    return map[string]string{
+        "token": fmt.Sprintf("Bearer %s", getAccessToken()),
+    }, nil
+}
+
+provider := &MyCredentialsProvider{}
+
+// Create a custom AuthHandler that uses your provider
+handler := &DynamicAuthHandler{provider: provider}
+
+client, err := openclaw.NewClient(
+    openclaw.WithURL("wss://api.example.com/ws"),
+    openclaw.WithClientID("my-client"),
+    openclaw.WithAuthHandler(handler),
+)
+```
+
+### Device Pairing
+
+For device-to-device authentication:
+
+```go
+import "github.com/frisbee-ai/openclaw-sdk-go/pkg/connection"
+
+device := &connection.ConnectParamsDevice{
+    ID:        "device-123",
+    PublicKey: "base64-encoded-public-key",
+    Signature: "device-signature",
+    SignedAt:  time.Now().Unix(),
+    Nonce:     "random-nonce",
+}
+
+// Note: Device pairing is configured via ClientConfig
+// See Advanced Configuration section for details
+```
+
+### Tick Monitor (Heartbeat Monitoring)
+
+Configure automatic heartbeat monitoring to detect stale connections:
+
+```go
+client, err := openclaw.NewClient(
+    openclaw.WithURL("wss://api.example.com/ws"),
+    openclaw.WithClientID("my-client"),
+    openclaw.WithTickMonitor(&openclaw.TickMonitorConfig{
+        TickIntervalMs:  30000,           // Check every 30 seconds
+        StaleMultiplier: 2,               // Connection stale after 2 missed ticks
+        OnStale: func() {
+            log.Println("⚠️  Connection is stale!")
+        },
+        OnRecovered: func() {
+            log.Println("✅ Connection recovered!")
+        },
+    }),
+)
+
+// After connecting, you can check tick monitor status
+tickMonitor := client.GetTickMonitor()
+if tickMonitor != nil && tickMonitor.IsStale() {
+    log.Printf("Stale for %d ms", tickMonitor.GetStaleDuration())
+}
+```
+
+### Gap Detector (Message Sequence Tracking)
+
+Configure gap detection for reliable message delivery:
+
+```go
+client, err := openclaw.NewClient(
+    openclaw.WithURL("wss://api.example.com/ws"),
+    openclaw.WithClientID("my-client"),
+    openclaw.WithGapDetector(&openclaw.GapDetectorConfig{
+        RecoveryMode:     "reconnect",    // or "snapshot", "skip"
+        SnapshotEndpoint: "/api/snapshot", // For snapshot recovery mode
+        MaxGaps:          100,
+        OnGap: func(gaps []openclaw.GapInfo) {
+            log.Printf("❌ Detected %d message gaps", len(gaps))
+            for _, gap := range gaps {
+                log.Printf("   Expected %d, got %d", gap.Expected, gap.Received)
+            }
+        },
+    }),
+)
+
+// Check gap detector status
+gapDetector := client.GetGapDetector()
+if gapDetector != nil && gapDetector.HasGap() {
+    log.Printf("Detected %d gaps", gapDetector.GapCount())
+}
+```
+
+### Server Information Access
+
+After connecting, you can access server information, snapshots, and policies:
+
+```go
+// Connect first
+err := client.Connect(ctx)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Get server information
+serverInfo := client.GetServerInfo()
+if serverInfo != nil {
+    log.Printf("Connected to: %s (conn: %s)",
+        serverInfo.Server.Version, serverInfo.Server.ConnID)
+    log.Printf("Protocol: %d", serverInfo.Protocol)
+}
+
+// Get server snapshot (contains agents, nodes, health, etc.)
+snapshot := client.GetSnapshot()
+if snapshot != nil {
+    log.Printf("Server uptime: %d ms", snapshot.UptimeMs)
+    log.Printf("State version: %d", snapshot.StateVersion)
+    log.Printf("Agents: %v", snapshot.Agents)
+}
+
+// Get server policy (limits and constraints)
+policy := client.GetPolicy()
+if policy != nil {
+    log.Printf("Max payload: %d bytes", policy.MaxPayload)
+    log.Printf("Tick interval: %d ms", policy.TickIntervalMs)
+}
+```
+
 ## API Documentation
 
 ### Client Options
@@ -154,6 +309,8 @@ client, err := openclaw.NewClient(
 | `WithTLSConfig(cfg)` | *TLSConfig | TLS configuration |
 | `WithEventBufferSize(n)` | int | Event buffer size |
 | `WithEventEmitTimeout(t)` | time.Duration | Timeout for Emit when channel is full (default 200ms) |
+| `WithTickMonitor(cfg)` | *TickMonitorConfig | Heartbeat monitoring configuration |
+| `WithGapDetector(cfg)` | *GapDetectorConfig | Message gap detection configuration |
 
 ### Connection States
 
@@ -185,12 +342,57 @@ const (
 )
 ```
 
+### API Modules
+
+The SDK provides 16 API modules accessible via client methods:
+
+| Module | Accessor Method | Description |
+|--------|-----------------|-------------|
+| Agents | `client.Agents()` | Agent management and operations |
+| Browser | `client.Browser()` | Browser automation control |
+| Channels | `client.Channels()` | Channel management |
+| Chat | `client.Chat()` | Chat and messaging operations |
+| Config | `client.Config()` | Configuration management |
+| Cron | `client.Cron()` | Scheduled task management |
+| DevicePairing | `client.DevicePairing()` | Device pairing operations |
+| ExecApprovals | `client.ExecApprovals()` | Execution approval workflow |
+| Nodes | `client.Nodes()` | Node management |
+| Push | `client.Push()` | Push notification services |
+| Secrets | `client.Secrets()` | Secret management |
+| Sessions | `client.Sessions()` | Session management |
+| Skills | `client.Skills()` | Skill operations |
+| System | `client.System()` | System-level operations (includes TTS and Wizard) |
+| Usage | `client.Usage()` | Usage tracking and reporting |
+
+#### API Usage Example
+
+```go
+// After connecting, access API modules directly
+agentsList, err := client.Agents().List(ctx)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Send a chat message
+chatResponse, err := client.Chat().Create(ctx, &ChatCreateParams{
+    AgentID: "agent-123",
+    Message: "Hello, world!",
+})
+
+// System operations include TTS and Wizard functionality
+ttsResult, err := client.System().TextToSpeech(ctx, &TTSParams{
+    Text: "Hello from OpenClaw Go SDK!",
+    Voice: "default",
+})
+```
+
 ## Project Structure
 
 ```
 openclaw-sdk-go/
 ├── pkg/
 │   ├── client.go          # Main client API (Option pattern configuration)
+│   ├── api/               # API namespace modules (16 modules: agents, browser, channels, chat, config, cron, device_pairing, exec_approvals, nodes, push, secrets, sessions, skills, shared, system, usage)
 │   ├── types/             # Shared types (ConnectionState, Event, errors, Logger)
 │   ├── auth/              # Authentication (CredentialsProvider, AuthHandler)
 │   ├── transport/         # WebSocket transport layer (gorilla/websocket)
