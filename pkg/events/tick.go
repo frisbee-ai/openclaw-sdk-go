@@ -191,3 +191,17 @@ func (tm *TickMonitor) IsRunning() bool {
 	defer tm.mu.RUnlock()
 	return tm.started
 }
+
+// GetTickIntervalMs returns the configured tick interval in milliseconds.
+func (tm *TickMonitor) GetTickIntervalMs() int64 {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+	return tm.tickIntervalMs
+}
+
+// GetStaleMultiplier returns the configured stale multiplier.
+func (tm *TickMonitor) GetStaleMultiplier() int {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+	return tm.staleMultiplier
+}

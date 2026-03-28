@@ -1,6 +1,7 @@
 package events
 
 import (
+	"sync"
 	"testing"
 	"time"
 )
@@ -193,6 +194,37 @@ func TestTickMonitor_GetStaleDuration(t *testing.T) {
 	}
 
 	monitor.Stop()
+}
+
+func TestTickMonitor_GetTickIntervalMs(t *testing.T) {
+	monitor := NewTickMonitor(5000, 2)
+	if monitor.GetTickIntervalMs() != 5000 {
+		t.Errorf("expected 5000, got %d", monitor.GetTickIntervalMs())
+	}
+}
+
+func TestTickMonitor_GetStaleMultiplier(t *testing.T) {
+	monitor := NewTickMonitor(5000, 3)
+	if monitor.GetStaleMultiplier() != 3 {
+		t.Errorf("expected 3, got %d", monitor.GetStaleMultiplier())
+	}
+}
+
+func TestTickMonitor_GetMethods_ThreadSafe(t *testing.T) {
+	monitor := NewTickMonitor(5000, 2)
+	monitor.Start()
+	defer monitor.Stop()
+
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_ = monitor.GetTickIntervalMs()
+			_ = monitor.GetStaleMultiplier()
+		}()
+	}
+	wg.Wait()
 }
 
 func TestTickMonitor_DefaultStaleMultiplier(t *testing.T) {
