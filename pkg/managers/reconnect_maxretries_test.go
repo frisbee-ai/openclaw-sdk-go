@@ -238,7 +238,90 @@ func TestReconnectManager_MaxRetries_ImmediateSuccessDoesNotCallFailed(t *testin
 	mu.Unlock()
 }
 
-// TestReconnectManager_MaxRetries_ZeroDelay verifies zero delay is handled (FOUND-02)
+func TestReconnectManager_AttemptCount_StartsAtZero(t *testing.T) {
+	config := DefaultReconnectConfig()
+	config.MaxRetries = 5
+	config.InitialDelay = 5 * time.Millisecond
+	rm := NewReconnectManager(config)
+	if rm.AttemptCount() != 0 {
+		t.Errorf("expected 0 before Start, got %d", rm.AttemptCount())
+	}
+	rm.Stop()
+}
+
+func TestReconnectManager_AttemptCount_IncrementsOnAttempts(t *testing.T) {
+	config := DefaultReconnectConfig()
+	config.MaxRetries = 3
+	config.InitialDelay = 5 * time.Millisecond
+	rm := NewReconnectManager(config)
+
+	rm.SetOnReconnect(func() error {
+		return &testError{msg: "connection failed"}
+	})
+	rm.SetOnReconnectFailed(func(err error) {})
+
+	rm.Start()
+	time.Sleep(50 * time.Millisecond) // Wait for attempts
+	rm.Stop()
+
+	if rm.AttemptCount() == 0 {
+		t.Error("expected AttemptCount > 0 after failed attempts")
+	}
+}
+
+func TestReconnectManager_AttemptCount_ThreadSafe(t *testing.T) {
+	config := DefaultReconnectConfig()
+	config.MaxRetries = 100
+	config.InitialDelay = 1 * time.Millisecond
+	rm := NewReconnectManager(config)
+
+	rm.SetOnReconnect(func() error {
+		time.Sleep(1 * time.Millisecond)
+		return &testError{msg: "connection failed"}
+	})
+	rm.SetOnReconnectFailed(func(err error) {})
+
+	rm.Start()
+	time.Sleep(50 * time.Millisecond)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_ = rm.AttemptCount()
+		}()
+	}
+	wg.Wait()
+	rm.Stop()
+}
+
+func TestReconnectManager_AttemptCount_NoResetOnSuccess(t *testing.T) {
+	config := DefaultReconnectConfig()
+	config.MaxRetries = 5
+	config.InitialDelay = 5 * time.Millisecond
+	rm := NewReconnectManager(config)
+
+	var callCount int
+	rm.SetOnReconnect(func() error {
+		callCount++
+		if callCount == 2 {
+			return nil // Success on 2nd attempt
+		}
+		return &testError{msg: "connection failed"}
+	})
+	rm.SetOnReconnectFailed(func(err error) {})
+
+	rm.Start()
+	time.Sleep(50 * time.Millisecond)
+	rm.Stop()
+
+	// After 1 failed + 1 success = 2 total attempts (goroutine exits on success)
+	if rm.AttemptCount() != 2 {
+		t.Errorf("expected 2 attempts, got %d", rm.AttemptCount())
+	}
+}
+
 func TestReconnectManager_MaxRetries_ZeroDelay(t *testing.T) {
 	config := DefaultReconnectConfig()
 	config.MaxAttempts = 3

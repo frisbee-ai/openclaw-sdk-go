@@ -10,6 +10,7 @@ package managers
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/frisbee-ai/openclaw-sdk-go/pkg/types"
@@ -38,6 +39,7 @@ type ReconnectManager struct {
 	onReconnectFailed func(err error)    // Callback for reconnection failures
 	stopped           chan struct{}      // Channel to signal stop
 	stoppedOnce       sync.Once          // Ensure stopped channel is closed once
+	attemptCount      atomic.Int64       // Total reconnect attempts made (OBS-01)
 }
 
 // NewReconnectManager creates a new reconnect manager with the given configuration.
@@ -94,10 +96,9 @@ func (rm *ReconnectManager) run() {
 	// fib(0) = InitialDelay, fib(1) = InitialDelay, fib(n) = fib(n-1) + fib(n-2)
 	prevDelay := time.Duration(0)
 	delay := rm.config.InitialDelay
-	attempt := 0
 
 	for {
-		attempt++
+		rm.attemptCount.Add(1)
 		// Use NewTimer instead of time.After to prevent memory leak
 		timer := time.NewTimer(delay)
 		select {
@@ -134,7 +135,7 @@ func (rm *ReconnectManager) run() {
 			if maxRetries <= 0 {
 				maxRetries = rm.config.MaxAttempts
 			}
-			if maxRetries > 0 && attempt >= maxRetries {
+			if maxRetries > 0 && rm.attemptCount.Load() >= int64(maxRetries) {
 				if onReconnectFailed != nil {
 					onReconnectFailed(types.NewMaxRetriesExceededError(maxRetries))
 				}
@@ -171,7 +172,14 @@ func (rm *ReconnectManager) Stop() {
 }
 
 // Reset is a no-op for compatibility.
-// Attempts are tracked locally in the run() loop.
+// Attempts are tracked in run() loop, not persisted
 func (rm *ReconnectManager) Reset() {
 	// Attempts are tracked in run() loop, not persisted
+}
+
+// AttemptCount returns the total number of reconnection attempts made.
+// This is a lifetime counter that does NOT reset on successful reconnect (OBS-01).
+// Thread-safe: uses atomic operations.
+func (rm *ReconnectManager) AttemptCount() int64 {
+	return rm.attemptCount.Load()
 }
