@@ -8,6 +8,7 @@ package types
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -278,6 +279,62 @@ func NewAbortError(message string, details any) *AbortError {
 		details:   details,
 	}}}
 }
+
+// ============================================================================
+// Foundation Phase Typed Errors (FOUND-02, FOUND-04)
+// ============================================================================
+
+// ErrTooManyPendingRequests is the sentinel error for pending request limit exceeded.
+// Use errors.Is(err, ErrTooManyPendingRequests) to check for this condition.
+var ErrTooManyPendingRequests = errors.New("too many pending requests")
+
+// ErrMaxRetriesExceeded is the sentinel error for retry budget exhaustion.
+// Use errors.Is(err, ErrMaxRetriesExceeded) to check for this condition.
+var ErrMaxRetriesExceeded = errors.New("max retries exceeded")
+
+// TooManyPendingRequestsError is returned when the pending request map exceeds its limit (FOUND-04).
+// This is a transient condition -- the caller can retry when pending requests complete.
+type TooManyPendingRequestsError struct {
+	*BaseError
+}
+
+// NewTooManyPendingRequestsError creates a new TooManyPendingRequestsError.
+// The error wraps ErrTooManyPendingRequests so errors.Is(err, ErrTooManyPendingRequests) works.
+func NewTooManyPendingRequestsError(limit int) *TooManyPendingRequestsError {
+	return &TooManyPendingRequestsError{&BaseError{
+		code:      "TOO_MANY_PENDING_REQUESTS",
+		message:   fmt.Sprintf("pending request limit (%d) exceeded", limit),
+		retryable: true, // Transient: caller can retry after pending requests complete
+		details:   map[string]int{"limit": limit},
+		err:       ErrTooManyPendingRequests,
+	}}
+}
+
+// TooManyPendingRequestsError implements OpenClawError via embedded BaseError.
+// Unwrap returns the embedded BaseError.
+func (e *TooManyPendingRequestsError) Unwrap() error { return e.BaseError }
+
+// MaxRetriesExceededError is returned when reconnection attempts exceed MaxRetries (FOUND-02).
+// This is a terminal condition -- no more retries will be attempted.
+type MaxRetriesExceededError struct {
+	*BaseError
+}
+
+// NewMaxRetriesExceededError creates a new MaxRetriesExceededError.
+// The error wraps ErrMaxRetriesExceeded so errors.Is(err, ErrMaxRetriesExceeded) works.
+func NewMaxRetriesExceededError(maxRetries int) *MaxRetriesExceededError {
+	return &MaxRetriesExceededError{&BaseError{
+		code:      "MAX_RETRIES_EXCEEDED",
+		message:   fmt.Sprintf("max retries exceeded: %d attempts", maxRetries),
+		retryable: false, // Terminal: budget exhausted
+		details:   map[string]int{"max_retries": maxRetries},
+		err:       ErrMaxRetriesExceeded,
+	}}
+}
+
+// MaxRetriesExceededError implements OpenClawError via embedded BaseError.
+// Unwrap returns the embedded BaseError.
+func (e *MaxRetriesExceededError) Unwrap() error { return e.BaseError }
 
 // ============================================================================
 // Error Factory
