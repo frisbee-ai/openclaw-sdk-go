@@ -54,6 +54,26 @@ type Event struct {
 	Timestamp time.Time
 }
 
+// ConnectionMetrics holds connection health metrics (OBS-01).
+// All fields are snapshots at call time -- no history retained.
+type ConnectionMetrics struct {
+	Latency        time.Duration // tick-based estimate: tickInterval * staleMultiplier
+	LastTickAge    time.Duration // actual time since last tick received
+	ReconnectCount int           // total reconnection attempts made (lifetime total)
+	IsStale        bool          // whether connection is currently stale
+}
+
+// EventPriority represents event urgency levels for graceful degradation (OBS-03).
+// Higher values = higher priority. When event buffers are full, lower priority
+// events are dropped before higher priority ones.
+type EventPriority int
+
+const (
+	EventPriorityLow    EventPriority = 0 // Dropped first when buffer full
+	EventPriorityMedium EventPriority = 1 // Default priority for most events
+	EventPriorityHigh   EventPriority = 2 // Rarely dropped
+)
+
 // EventHandler is a function type that handles events.
 // It receives events and processes them based on the event type.
 type EventHandler func(Event)
