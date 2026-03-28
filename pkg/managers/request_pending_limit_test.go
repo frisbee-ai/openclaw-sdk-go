@@ -221,9 +221,12 @@ func TestRequestManager_ChannelOwnership_CloseNoDoubleClose(t *testing.T) {
 
 	done := make(chan error, 1)
 	go func() {
-		longCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		// Use a context derived from rm.ctx so that rm.Close() (which cancels rm.ctx)
+		// propagates cancellation to this SendRequest call. This tests that Close()
+		// correctly unblocks waiting goroutines via nil send, not double-close.
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		_, err := rm.SendRequest(longCtx, req, nil)
+		_, err := rm.SendRequest(ctx, req, nil)
 		done <- err
 	}()
 

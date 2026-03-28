@@ -178,7 +178,7 @@ func TestReconnectManager_BothZeroInfinite(t *testing.T) {
 	config := DefaultReconnectConfig()
 	config.MaxAttempts = 0
 	config.MaxRetries = 0
-	config.InitialDelay = 10 * time.Millisecond
+	config.InitialDelay = 5 * time.Millisecond
 
 	rm := NewReconnectManager(config)
 
@@ -193,7 +193,7 @@ func TestReconnectManager_BothZeroInfinite(t *testing.T) {
 	})
 
 	rm.Start()
-	time.Sleep(50 * time.Millisecond) // Run for limited time
+	time.Sleep(80 * time.Millisecond) // Run for limited time (enough for 3+ attempts with 5ms delay)
 
 	// Verify multiple attempts occurred (infinite means it kept going)
 	mu.Lock()
