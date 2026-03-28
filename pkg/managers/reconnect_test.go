@@ -1,9 +1,12 @@
 package managers
 
 import (
+	"errors"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/frisbee-ai/openclaw-sdk-go/pkg/types"
 )
 
 func TestReconnectManager_Stop(t *testing.T) {
@@ -67,6 +70,7 @@ func TestReconnectManager_NoCallbackStops(t *testing.T) {
 func TestReconnectManager_FailedCallback(t *testing.T) {
 	config := DefaultReconnectConfig()
 	config.MaxAttempts = 2
+	config.MaxRetries = 2 // FOUND-02: MaxRetries takes precedence
 	config.InitialDelay = 10 * time.Millisecond
 
 	rm := NewReconnectManager(config)
@@ -74,6 +78,7 @@ func TestReconnectManager_FailedCallback(t *testing.T) {
 	var mu sync.Mutex
 	failedCalled := false
 	attemptCount := 0
+	failedErrors := []error{}
 
 	rm.SetOnReconnect(func() error {
 		mu.Lock()
@@ -85,6 +90,7 @@ func TestReconnectManager_FailedCallback(t *testing.T) {
 	rm.SetOnReconnectFailed(func(err error) {
 		mu.Lock()
 		failedCalled = true
+		failedErrors = append(failedErrors, err)
 		mu.Unlock()
 	})
 
@@ -97,8 +103,17 @@ func TestReconnectManager_FailedCallback(t *testing.T) {
 	if !failedCalled {
 		t.Error("expected failed callback to be called")
 	}
+	// MaxRetries=2: 2 reconnect attempts, then stops
 	if attemptCount != 2 {
-		t.Errorf("expected 2 attempts, got %d", attemptCount)
+		t.Errorf("expected 2 reconnect attempts, got %d", attemptCount)
+	}
+	// onReconnectFailed called 2 times for individual failures + 1 for budget exhaustion
+	if len(failedErrors) != 3 {
+		t.Errorf("expected 3 failed errors (2 failures + 1 MaxRetriesExceeded), got %d", len(failedErrors))
+	}
+	// The last error should be MaxRetriesExceeded
+	if len(failedErrors) == 3 && !errors.Is(failedErrors[2], types.ErrMaxRetriesExceeded) {
+		t.Errorf("expected last error to wrap ErrMaxRetriesExceeded, got %v", failedErrors[2])
 	}
 	mu.Unlock()
 

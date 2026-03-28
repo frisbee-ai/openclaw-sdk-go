@@ -11,11 +11,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/frisbee-ai/openclaw-sdk-go/pkg/connection"
+	"github.com/frisbee-ai/openclaw-sdk-go/pkg/types"
 	"github.com/gorilla/websocket"
 )
 
@@ -33,6 +33,7 @@ type WebSocketConfig struct {
 	ReadTimeout       time.Duration // Read timeout (default 30s)
 	WriteTimeout      time.Duration // Write timeout (default 10s)
 	ChannelBufferSize int           // Size of internal send/recv channels (default 64)
+	Logger            types.Logger  // Optional logger for warnings (FOUND-05)
 }
 
 // TLSConfig holds TLS configuration for transport layer.
@@ -105,9 +106,9 @@ func Dial(ctx context.Context, url string, header http.Header, config *WebSocket
 
 	// Convert TLSConfig to crypto/tls.Config if provided
 	if config != nil && config.TLSConfig != nil {
-		// Warn about insecure TLS configuration at dial time
-		if config.TLSConfig.InsecureSkipVerify {
-			fmt.Fprintf(os.Stderr, "WARNING: InsecureSkipVerify is enabled - server certificate verification is disabled. This is insecure and should only be used for testing or in controlled environments.\n")
+		// Warn about insecure TLS configuration at dial time (FOUND-05)
+		if config.TLSConfig.InsecureSkipVerify && config.Logger != nil {
+			config.Logger.Warn("TLS InsecureSkipVerify is enabled -- server certificate verification disabled; not recommended for production use")
 		}
 
 		// Use connection.TlsValidator to properly load certificates
@@ -119,6 +120,9 @@ func Dial(ctx context.Context, url string, header http.Header, config *WebSocket
 			ServerName:         config.TLSConfig.ServerName,
 		}
 		validator := connection.NewTlsValidator(tlsConfig)
+		if config.Logger != nil {
+			validator.SetLogger(config.Logger)
+		}
 		tlsClientConfig, err := validator.GetTLSConfig()
 		if err != nil {
 			return nil, fmt.Errorf("failed to build TLS config: %w", err)

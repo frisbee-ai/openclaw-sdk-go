@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/frisbee-ai/openclaw-sdk-go/pkg/protocol"
+	"github.com/frisbee-ai/openclaw-sdk-go/pkg/types"
 )
 
 // RequestOptions contains options for a pending request.
@@ -29,32 +30,49 @@ type pendingRequest struct {
 // RequestManager manages pending requests and their responses.
 // It correlates outgoing requests with incoming responses using request IDs.
 type RequestManager struct {
-	pending  map[string]*pendingRequest    // Map of request ID to pending request
-	timeouts map[string]context.CancelFunc // Map of request ID to timeout cancel function
-	mu       sync.Mutex                    // Mutex for thread-safe access
-	ctx      context.Context               // Context for lifecycle management
-	cancel   context.CancelFunc            // Cancel function for context
-	closed   bool                          // Flag indicating manager is closed
+	pending    map[string]*pendingRequest    // Map of request ID to pending request
+	timeouts   map[string]context.CancelFunc // Map of request ID to timeout cancel function
+	mu         sync.Mutex                    // Mutex for thread-safe access
+	ctx        context.Context               // Context for lifecycle management
+	cancel     context.CancelFunc            // Cancel function for context
+	closed     bool                          // Flag indicating manager is closed
+	maxPending int                           // Max concurrent pending requests; 0 = unlimited (FOUND-04)
 }
 
 // NewRequestManager creates a new request manager.
 func NewRequestManager(ctx context.Context) *RequestManager {
 	ctx, cancel := context.WithCancel(ctx)
 	return &RequestManager{
-		pending:  make(map[string]*pendingRequest),
-		timeouts: make(map[string]context.CancelFunc),
-		ctx:      ctx,
-		cancel:   cancel,
+		pending:    make(map[string]*pendingRequest),
+		timeouts:   make(map[string]context.CancelFunc),
+		ctx:        ctx,
+		cancel:     cancel,
+		maxPending: 0, // 0 = unlimited (backward compatible)
 	}
+}
+
+// SetMaxPending sets the maximum number of concurrent pending requests.
+// A value of 0 (default) means unlimited. When the limit is reached,
+// SendRequest returns a TooManyPendingRequestsError. FOUND-04.
+func (rm *RequestManager) SetMaxPending(max int) {
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
+	rm.maxPending = max
 }
 
 // SendRequest sends a request and waits for a response.
 // It registers the request ID, sends the request via sendFunc, and waits for response.
-// Returns the response or an error if the request times out or is cancelled.
+// Returns the response or an error if the request times out, is cancelled, or the pending limit is exceeded.
+// Thread-safe: safe to call from multiple goroutines concurrently.
 func (rm *RequestManager) SendRequest(ctx context.Context, req *protocol.RequestFrame, sendFunc func(*protocol.RequestFrame) error) (*protocol.ResponseFrame, error) {
 	respCh := make(chan *protocol.ResponseFrame, 1)
 
 	rm.mu.Lock()
+	// Check pending request limit (FOUND-04)
+	if rm.maxPending > 0 && len(rm.pending) >= rm.maxPending {
+		rm.mu.Unlock()
+		return nil, types.NewTooManyPendingRequestsError(rm.maxPending)
+	}
 	rm.pending[req.ID] = &pendingRequest{
 		responseCh: respCh,
 	}
@@ -74,8 +92,9 @@ func (rm *RequestManager) SendRequest(ctx context.Context, req *protocol.Request
 			cancel()
 			delete(rm.timeouts, req.ID)
 		}
-		// Close channel while holding lock to prevent race with HandleResponse
-		// Channel close is safe - only reader (HandleResponse) can be affected
+		// Close channel while holding lock to prevent race with HandleResponse.
+		// Channel is owned exclusively by this function -- Clear() and Close() signal
+		// via non-blocking send instead of closing, so double-close is impossible.
 		close(respCh)
 		rm.mu.Unlock()
 	}
@@ -90,6 +109,11 @@ func (rm *RequestManager) SendRequest(ctx context.Context, req *protocol.Request
 
 	select {
 	case resp := <-respCh:
+		// resp is nil when Clear() or Close() unblocks us by sending nil on the channel.
+		// In that case return ctx.Err() (context was cancelled).
+		if resp == nil {
+			return nil, ctx.Err()
+		}
 		return resp, nil
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -151,6 +175,10 @@ func (rm *RequestManager) AbortRequest(requestID string) {
 }
 
 // Clear cancels all pending requests.
+// It signals each waiting goroutine by sending nil on its respCh (non-blocking),
+// then removes the entry from the pending map. The cleanup() in each SendRequest
+// goroutine will close the respCh after it returns.
+// This prevents double-close: Clear/Close never close channels, only SendRequest cleanup does.
 func (rm *RequestManager) Clear() {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
@@ -160,7 +188,11 @@ func (rm *RequestManager) Clear() {
 	}
 
 	for id, req := range rm.pending {
-		close(req.responseCh)
+		// Signal the waiting goroutine with nil response (non-blocking send)
+		select {
+		case req.responseCh <- nil:
+		default:
+		}
 		delete(rm.pending, id)
 	}
 	for _, cancel := range rm.timeouts {
@@ -169,7 +201,8 @@ func (rm *RequestManager) Clear() {
 }
 
 // Close cleans up all pending requests.
-// It cancels the context, closes all pending channels, and clears timeout functions.
+// It cancels the context, signals all waiting goroutines, removes pending entries,
+// and clears timeout functions. Thread-safe and idempotent.
 func (rm *RequestManager) Close() error {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
@@ -179,11 +212,16 @@ func (rm *RequestManager) Close() error {
 	}
 	rm.closed = true
 
-	// First cancel context while holding lock to prevent new operations
+	// Cancel context to interrupt any long-running operations
 	rm.cancel()
-	// Clear pending map and timeouts
+
 	for id, req := range rm.pending {
-		close(req.responseCh)
+		// Signal the waiting goroutine with nil response (non-blocking send).
+		// Cleanup() in SendRequest will close respCh after this function returns.
+		select {
+		case req.responseCh <- nil:
+		default:
+		}
 		delete(rm.pending, id)
 	}
 	for _, cancel := range rm.timeouts {

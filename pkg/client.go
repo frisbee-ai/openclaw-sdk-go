@@ -394,8 +394,10 @@ func NewClient(opts ...ClientOption) (OpenClawClient, error) {
 	c.managers.event = managers.NewEventManager(ctx, cfg.EventBufferSize, cfg.EventEmitTimeout)
 	c.managers.request = managers.NewRequestManager(ctx)
 	c.managers.connection = managers.NewConnectionManager(ctx, &managers.ClientConfig{
-		URL:    cfg.URL,
-		Header: cfg.Header,
+		URL:       cfg.URL,
+		Header:    cfg.Header,
+		TLSConfig: cfg.TLSConfig,
+		Logger:    cfg.Logger,
 	}, c.managers.event)
 
 	// Initialize protocol negotiator
@@ -439,6 +441,16 @@ func NewClient(opts ...ClientOption) (OpenClawClient, error) {
 				Err:       err,
 				Timestamp: time.Now(),
 			})
+		})
+
+		// Start reconnect on disconnect event, not after initial Connect (FOUND-02 fix)
+		c.managers.event.Subscribe(EventDisconnect, func(e Event) {
+			c.mu.Lock()
+			reconnect := c.managers.reconnect
+			c.mu.Unlock()
+			if reconnect != nil {
+				reconnect.Start()
+			}
 		})
 	}
 
@@ -504,9 +516,6 @@ func (c *client) Connect(ctx context.Context) error {
 		// Note: GapDetector SetOnGap would be set here when enhanced
 	}
 
-	if c.managers.reconnect != nil {
-		c.managers.reconnect.Start()
-	}
 	return nil
 }
 

@@ -16,6 +16,8 @@ import (
 	"net"
 	"os"
 	"time"
+
+	types "github.com/frisbee-ai/openclaw-sdk-go/pkg/types"
 )
 
 // ErrCertificateExpired represents certificate expiration errors.
@@ -39,7 +41,8 @@ var ErrCertificateRevoked = errors.New("certificate has been revoked")
 // TlsValidator validates TLS certificates and configuration.
 // It provides methods to validate TLS settings and build crypto/tls.Config.
 type TlsValidator struct {
-	config *TLSConfig // TLS configuration to validate
+	config *TLSConfig   // TLS configuration to validate
+	logger types.Logger // Optional logger for warnings (FOUND-05)
 }
 
 // TLSConfig holds TLS configuration for connection layer.
@@ -98,6 +101,11 @@ func (v *TlsValidator) Validate() error {
 	return nil
 }
 
+// SetLogger sets the logger for this validator (FOUND-05).
+func (v *TlsValidator) SetLogger(logger types.Logger) {
+	v.logger = logger
+}
+
 // GetTLSConfig returns the TLS config for the connection.
 // It validates the configuration first, then builds a crypto/tls.Config.
 func (v *TlsValidator) GetTLSConfig() (*tls.Config, error) {
@@ -114,6 +122,11 @@ func (v *TlsValidator) GetTLSConfig() (*tls.Config, error) {
 	config := &tls.Config{
 		InsecureSkipVerify: v.config.InsecureSkipVerify,
 		ServerName:         v.config.ServerName,
+	}
+
+	// Log warning if InsecureSkipVerify is enabled (FOUND-05)
+	if v.config.InsecureSkipVerify && v.logger != nil {
+		v.logger.Warn("TLS InsecureSkipVerify is enabled -- server certificate verification disabled; not recommended for production use")
 	}
 
 	// Load client certificate if provided
@@ -248,13 +261,18 @@ func ValidateCertificateChain(cert *x509.Certificate, caPool *x509.CertPool) err
 }
 
 // CheckCertificateRevocation checks if a certificate has been revoked.
-// Note: This requires access to CRL or OCSP responders.
-// In production, this should be configured with proper CRL/OCSP endpoints.
 //
-// TODO: Implement actual CRL/OCSP checking.
-// - For CRL: Fetch and parse CRL from cert.CRLDistributionPoints
-// - For OCSP: Perform OCSP check using cert.OCSPServer
-// - Consider caching revocation status to avoid repeated network calls
+// v1 limitation: This is a STUB implementation for v1.0. No actual CRL fetching
+// or OCSP checking is performed. The function always returns nil (no revocation detected).
+//
+// A production implementation would require:
+//   - Fetching CRLs from cert.CRLDistributionPoints (HTTP/HTTPS)
+//   - Parsing CRLs using x509.ParseRevocationList (Go 1.21+)
+//   - Performing OCSP checks against cert.OCSPServer endpoints
+//   - Caching revocation status with TTL to avoid repeated network calls
+//   - Handling timeouts and failures gracefully (fail-open vs fail-closed policy)
+//
+// See: REQUIREMENTS.md FOUND-03
 func CheckCertificateRevocation(cert *x509.Certificate, _ *x509.RevocationList) error {
 	if cert == nil {
 		return errors.New("certificate is nil")

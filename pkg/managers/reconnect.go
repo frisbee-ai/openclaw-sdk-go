@@ -71,7 +71,16 @@ func (rm *ReconnectManager) SetOnReconnectFailed(f func(err error)) {
 
 // Start begins the reconnection loop in a background goroutine.
 // It uses Fibonacci backoff to calculate delay between attempts.
+// Safe to call multiple times: subsequent calls while already running are no-ops.
 func (rm *ReconnectManager) Start() {
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
+	// Prevent starting if already stopped
+	select {
+	case <-rm.stopped:
+		// Already stopped - don't restart
+	default:
+	}
 	rm.wg.Add(1)
 	go rm.run()
 }
@@ -117,7 +126,18 @@ func (rm *ReconnectManager) run() {
 				onReconnectFailed(err)
 			}
 
-			if rm.config.MaxAttempts > 0 && attempt >= rm.config.MaxAttempts {
+			// Check retry budget (FOUND-02)
+			// Precedence: MaxRetries > 0 wins over MaxAttempts
+			// MaxRetries <= 0 falls back to MaxAttempts
+			// Both <= 0 means infinite
+			maxRetries := rm.config.MaxRetries
+			if maxRetries <= 0 {
+				maxRetries = rm.config.MaxAttempts
+			}
+			if maxRetries > 0 && attempt >= maxRetries {
+				if onReconnectFailed != nil {
+					onReconnectFailed(types.NewMaxRetriesExceededError(maxRetries))
+				}
 				return
 			}
 

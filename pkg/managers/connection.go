@@ -22,8 +22,10 @@ import (
 
 // ClientConfig holds client configuration for ConnectionManager.
 type ClientConfig struct {
-	URL    string              // WebSocket server URL
-	Header map[string][]string // Custom HTTP headers for WebSocket handshake
+	URL       string               // WebSocket server URL
+	Header    map[string][]string  // Custom HTTP headers for WebSocket handshake
+	TLSConfig *transport.TLSConfig // TLS configuration for wss:// connections (FOUND-05)
+	Logger    types.Logger         // Logger for warnings (FOUND-05)
 }
 
 // NewConnectionManager creates a new connection manager with the given configuration.
@@ -70,7 +72,11 @@ func (cm *ConnectionManager) Connect(ctx context.Context) error {
 		}
 	}
 
-	t, err := transport.Dial(ctx, cm.config.URL, header, nil)
+	wsConfig := &transport.WebSocketConfig{
+		TLSConfig: cm.config.TLSConfig,
+		Logger:    cm.config.Logger,
+	}
+	t, err := transport.Dial(ctx, cm.config.URL, header, wsConfig)
 	if err != nil {
 		if transitionErr := cm.state.Transition(types.StateFailed, err); transitionErr != nil {
 			err = errors.Join(err, transitionErr)
