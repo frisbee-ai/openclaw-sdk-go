@@ -92,7 +92,12 @@ Plans:
   2. Semantic version tags exist -- v0.1.0, v0.2.0, ... progression leading to v1.0.0
   3. Changelog automation configured -- git-cliff generates CHANGELOG.md from conventional commits
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md -- REL-01: Update .goreleaser.yaml with mode: github, release section, and cleaned up before.hooks
+- [ ] 05-02-PLAN.md -- REL-02: Create and push v1.0.1 tag to trigger release workflow
+- [ ] 05-03-PLAN.md -- REL-03: Verify git-cliff configuration and release.yml integration
 
 ## Progress
 
