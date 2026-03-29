@@ -76,7 +76,11 @@ Plans:
   2. Fuzz tests validate correctness -- round-trip assertions pass; corpus files exist in testdata/fuzz/
   3. Benchstat runs in CI -- performance regressions on hot paths are detected and reported
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md -- TEST-01: L1 protocol benchmarks (pkg/protocol/bench_test.go), L2 EventManager benchmarks (pkg/managers/event_bench_test.go), L2 RequestManager benchmarks (pkg/managers/request_bench_test.go), fuzz round-trip assertions (pkg/protocol/fuzz_test.go), corpus files (testdata/fuzz/)
+- [ ] 04-02-PLAN.md -- TEST-03: Add benchstat CI job to .github/workflows/ci.yml with p<0.05 AND >10% regression threshold
 
 ### Phase 5: Release Infrastructure
 
@@ -100,5 +104,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation Hardening | 3/3 | Complete    | 2026-03-28 |
 | 2. Observability | 2/3 | In progress | - |
 | 3. Client Struct Refactor | 2/2 | Complete   | 2026-03-29 |
-| 4. Benchmarking and Fuzz Testing | 0/3 | Not started | - |
+| 4. Benchmarking and Fuzz Testing | 0/2 | Not started | - |
 | 5. Release Infrastructure | 0/3 | Not started | - |
