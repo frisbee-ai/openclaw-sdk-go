@@ -32,12 +32,12 @@ OpenClaw SDK Go is a feature-complete WebSocket client library for Go, migrated 
 - ✓ **Client Struct Organization** — Sub-struct grouping (managers, api, protocol, health) for maintainability
 - ✓ **API Semantics** — Clear Close() vs Disconnect() documentation in OpenClawClient interface
 - ✓ **Performance** — L1+L2 hot-path benchmarks (JSON marshal/unmarshal, event dispatch, request correlation); custom metrics (bytes_per_frame, channel_overhead_ns, goroutine_count); fuzz test round-trip assertions with 24 corpus files
+- ✓ **Release Process** — GoReleaser v2 configured for library mode (mode: github, gomod.proxy: true); v1.0.0 semantic version tag exists; git-cliff changelog automation integrated with release.yml (REL-01, REL-03 satisfied; REL-02 partial — v1.0.1 tag skipped by user)
 
 ### Active
 
 - [ ] **API Stability** — Complete fuzz testing, edge case coverage, API contract verification
 - [ ] **Developer Experience** — Comprehensive examples, usage guides, migration documentation
-- [ ] **Release Process** — Semantic versioning, GoReleaser configuration, library distribution via git tags
 - [ ] **Performance** — Benchmark existing hot paths, identify bottlenecks (Validated in Phase 04)
 - [ ] **Error Recovery** — Improve error handling granularity, retry policies for specific error types
 
@@ -64,6 +64,7 @@ This SDK was migrated from `openclaw-sdk-typescript` (TypeScript). The design do
 - Client struct organized into 4 sub-struct groups (managers, api, protocol, health)
 - Hot-path benchmarks established (protocol, managers) with benchstat CI integration
 - Fuzz testing with round-trip assertions and 24 corpus files
+- GoReleaser v2 release infrastructure configured and verified (REL-01, REL-03); git-cliff changelog automation operational
 
 ### Known Concerns
 
@@ -94,4 +95,4 @@ From codebase analysis (CONCERNS.md):
 
 ---
 
-*Last updated: 2026-03-29 after Phase 03 (client-struct-refactor) completion*
+*Last updated: 2026-03-29 after Phase 05 (release-infrastructure) completion*
