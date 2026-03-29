@@ -29,6 +29,8 @@ OpenClaw SDK Go is a feature-complete WebSocket client library for Go, migrated 
 - ✓ **Graceful Shutdown** — All managers implement Close() with goroutine cleanup via sync.WaitGroup
 - ✓ **CI/CD Pipeline** — GitHub Actions: fmt, vet, lint, test with race detection, coverage upload
 - ✓ **Pre-commit Hooks** — Local: gofmt, go vet, golangci-lint, go test
+- ✓ **Client Struct Organization** — Sub-struct grouping (managers, api, protocol, health) for maintainability
+- ✓ **API Semantics** — Clear Close() vs Disconnect() documentation in OpenClawClient interface
 
 ### Active
 
@@ -51,13 +53,14 @@ OpenClaw SDK Go is a feature-complete WebSocket client library for Go, migrated 
 
 This SDK was migrated from `openclaw-sdk-typescript` (TypeScript). The design document at `docs/specs/2026-03-18-typescript-to-go-migration-design.md` details architectural decisions. The migration preserved functional equivalence but not API identity — some APIs were adapted for Go idioms (e.g., option pattern instead of config objects, interfaces instead of classes).
 
-### Current State (2026-03-28)
+### Current State (2026-03-29)
 
 - All 127 API methods implemented across 15 namespaces
 - Full manager-based architecture with 4 managers (event, request, connection, reconnect)
 - CI pipeline passing: fmt, vet, lint, test with race detection
 - 80%+ test coverage target
 - README.md synchronized with implementation
+- Client struct organized into 4 sub-struct groups (managers, api, protocol, health)
 - No released versions yet (no git tags)
 - Go 1.24 in CI, Go 1.21+ at runtime
 
@@ -90,4 +93,4 @@ From codebase analysis (CONCERNS.md):
 
 ---
 
-*Last updated: 2026-03-28 after /gsd:new-project initialization (brownfield)*
+*Last updated: 2026-03-29 after Phase 03 (client-struct-refactor) completion*
