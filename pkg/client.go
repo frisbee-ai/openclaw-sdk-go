@@ -347,7 +347,9 @@ func WithMaxPending(max int) ClientOption {
 type OpenClawClient interface {
 	// Connect establishes a WebSocket connection to the server.
 	Connect(ctx context.Context) error
-	// Disconnect closes the connection gracefully.
+	// Disconnect disconnects from the server without shutting down the client.
+	// Stops reconnection attempts and cleans up connection state.
+	// Call Connect() to reconnect.
 	Disconnect() error
 	// State returns the current connection state.
 	State() ConnectionState
@@ -359,7 +361,8 @@ type OpenClawClient interface {
 	// Subscribe adds an event handler for the specified event type.
 	// Returns an unsubscribe function.
 	Subscribe(eventType EventType, handler EventHandler) func()
-	// Close shuts down the client and releases all resources.
+	// Close shuts down the entire client and releases all resources.
+	// No further operations are valid after calling Close.
 	Close() error
 	// GetMetrics returns a snapshot of connection health metrics (OBS-01).
 	// Latency is a tick-based estimate (tickInterval * staleMultiplier).
