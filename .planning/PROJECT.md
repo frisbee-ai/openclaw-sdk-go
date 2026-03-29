@@ -33,6 +33,7 @@ OpenClaw SDK Go is a feature-complete WebSocket client library for Go, migrated 
 - ✓ **API Semantics** — Clear Close() vs Disconnect() documentation in OpenClawClient interface
 - ✓ **Performance** — L1+L2 hot-path benchmarks (JSON marshal/unmarshal, event dispatch, request correlation); custom metrics (bytes_per_frame, channel_overhead_ns, goroutine_count); fuzz test round-trip assertions with 24 corpus files
 - ✓ **Release Process** — GoReleaser v2 configured for library mode (mode: github, gomod.proxy: true); v1.0.0 semantic version tag exists; git-cliff changelog automation integrated with release.yml (REL-01, REL-03 satisfied; REL-02 partial — v1.0.1 tag skipped by user)
+- ✓ **Observability** — ConnectionMetrics (Latency, LastTickAge, ReconnectCount, IsStale) via GetMetrics(); per-request timeout via WithRequestTimeout option; event priority levels (HIGH/MEDIUM/LOW) with graceful degradation; configurable EventBufferSize via WithEventBufferSize option (OBS-01, OBS-02, OBS-03, OBS-04)
 
 ### Active
 
@@ -95,4 +96,4 @@ From codebase analysis (CONCERNS.md):
 
 ---
 
-*Last updated: 2026-03-29 after Phase 05 (release-infrastructure) completion*
+*Last updated: 2026-03-29 after Phase 02 (Observability) completion*
