@@ -31,13 +31,14 @@ OpenClaw SDK Go is a feature-complete WebSocket client library for Go, migrated 
 - ✓ **Pre-commit Hooks** — Local: gofmt, go vet, golangci-lint, go test
 - ✓ **Client Struct Organization** — Sub-struct grouping (managers, api, protocol, health) for maintainability
 - ✓ **API Semantics** — Clear Close() vs Disconnect() documentation in OpenClawClient interface
+- ✓ **Performance** — L1+L2 hot-path benchmarks (JSON marshal/unmarshal, event dispatch, request correlation); custom metrics (bytes_per_frame, channel_overhead_ns, goroutine_count); fuzz test round-trip assertions with 24 corpus files
 
 ### Active
 
 - [ ] **API Stability** — Complete fuzz testing, edge case coverage, API contract verification
 - [ ] **Developer Experience** — Comprehensive examples, usage guides, migration documentation
 - [ ] **Release Process** — Semantic versioning, GoReleaser configuration, library distribution via git tags
-- [ ] **Performance** — Benchmark existing hot paths, identify bottlenecks
+- [ ] **Performance** — Benchmark existing hot paths, identify bottlenecks (Validated in Phase 04)
 - [ ] **Error Recovery** — Improve error handling granularity, retry policies for specific error types
 
 ### Out of Scope
@@ -61,8 +62,8 @@ This SDK was migrated from `openclaw-sdk-typescript` (TypeScript). The design do
 - 80%+ test coverage target
 - README.md synchronized with implementation
 - Client struct organized into 4 sub-struct groups (managers, api, protocol, health)
-- No released versions yet (no git tags)
-- Go 1.24 in CI, Go 1.21+ at runtime
+- Hot-path benchmarks established (protocol, managers) with benchstat CI integration
+- Fuzz testing with round-trip assertions and 24 corpus files
 
 ### Known Concerns
 
