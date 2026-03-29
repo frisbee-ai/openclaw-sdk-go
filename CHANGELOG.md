@@ -8,6 +8,104 @@ All notable changes to this project will be documented in this file.
 
 ### 🚀 Features
 
+- Add RequestRateLimiter, TokenBucketLimiter, and MaxRetries ([f36a470](f36a470ba211c65f24a90fc286ca098c8b0bb0b2)) - (Lin Yang)
+- Add ErrTooManyPendingRequests and ErrMaxRetriesExceeded typed errors ([fe2d433](fe2d433d880b0ba1265bfd5c75917c43ca85b5fa)) - (Lin Yang)
+- Implement MaxRetries enforcement, TLS/Logger wiring, and disconnect-triggered reconnect ([1189b3e](1189b3ed63e76eac862ee60f64b675bc196e67fa)) - (Lin Yang)
+- Implement pending request limits and fix channel ownership ([e8f5252](e8f5252a8031320c214607ae24151bbb7d67aae8)) - (Lin Yang)
+- Add rate limiter, reduced mutex scope, and rate-limit options ([d0b2234](d0b22349a7a40325e4ff3596610f837ceed43e89)) - (Lin Yang)
+- Add ConnectionMetrics struct and EventPriority type ([94ffe22](94ffe2247b97b8af449a1ed91bd0c2b53dc9e063)) - (Lin Yang)
+- Add GetTickIntervalMs and GetStaleMultiplier to TickMonitor ([bc48c40](bc48c4043c30e55e3e695919fa54133f9f746c5f)) - (Lin Yang)
+- Add AttemptCount() to ReconnectManager with atomic counter ([243f4a3](243f4a35848de3c1095ccb2c67ee78e51778750e)) - (Lin Yang)
+- Add GetMetrics() to OpenClawClient interface and client ([e4921b0](e4921b02dcf7cb78c4e70a934b62873713bd4358)) - (Lin Yang)
+- OBS-02 and OBS-03 implementation ([5803615](580361595b5b8a589bb16e34ac21b5d8d07708f4)) - (Lin Yang)
+- Add benchstat CI job with regression detection ([ae43a95](ae43a953454bc2c8bd048896c872de9bb10a1a80)) - (Lin Yang)
+- Add benchmarks and fuzz testing with round-trip assertions ([f3e980e](f3e980e256f53ea362d060db8d1bfc3674505b0f)) - (Lin Yang)
+
+### 🐛 Bug Fixes
+
+- Rename file to files for codecov-action v5 ([6e6f113](6e6f113c641dac704ef12d6690027475af823066)) - (Lin Yang)
+- Stabilize flaky reconnect and channel ownership tests ([ebd76e1](ebd76e1cdca2bbc683eeebe8462487a7d4d02553)) - (Lin Yang)
+
+
+
+### ♻️ Refactor
+
+- Align Go SDK API with TypeScript SDK (127 methods) ([087d2d2](087d2d2e2f87aa596876878e7ea879a73e8460b7)) - (Lin Yang)
+- Reorganize client struct into logical sub-structs ([a797aac](a797aacd1aa886cca79050cb38d1bb602b67f2ef)) - (Lin Yang)
+
+### ✅ Testing
+
+- Add test coverage for 7 new API modules ([4ee490a](4ee490ad2ade7a7adbfbd3c910344bdd58db490d)) - (Lin Yang)
+- Extend TestDefaultReconnectConfig to check MaxRetries=10 ([5773424](5773424f152f08442be1f15607265a3247d15ff7)) - (Lin Yang)
+- Add OBS-04 EventBufferSize verification tests ([8ff46c7](8ff46c7156e59d1f2b68a595bbe903579c88cba4)) - (Lin Yang)
+- Add 24 fuzz corpus files for all frame types ([597e83c](597e83c70f093d2b1dcc2bd50ec7e904002212fa)) - (Lin Yang)
+
+
+
+### 📖 Documentation
+
+- Synchronize README with current implementation and add missing config options ([f06077d](f06077d726b2c1ba2a6ae537c32718f5f1b65679)) - (Lin Yang)
+- Map existing codebase ([f8050da](f8050da17e397ae49c185fef1706043d38c75c99)) - (Lin Yang)
+- Initialize project (brownfield) ([2385b74](2385b74c3dff8b6e68e7e7b037cef6330ca7c5fe)) - (Lin Yang)
+- Complete project research ([a59d2b0](a59d2b0d36690c1e699845dd9a6c1b473b08916b)) - (Lin Yang)
+- Define v1 requirements ([7510a23](7510a23b3795ac68f1e50faab761d7358cf4ad45)) - (Lin Yang)
+- Create roadmap (5 phases) ([3c50ecb](3c50ecb01409bd95ae66b2611e179851be37c06e)) - (Lin Yang)
+- Research foundation hardening phase ([965258a](965258a4f19246bda82d9a6220fdc29523bec8d7)) - (Lin Yang)
+- Create phase plan ([67bae2a](67bae2ac5764fb89ba578ff1472609a25e8c464e)) - (Lin Yang)
+- Cross-AI review for phase 1 ([28fae2b](28fae2bd1d06d6004dd9fe34877ff56415e7142a)) - (Lin Yang)
+- Revise plans based on cross-AI review feedback ([f7893ad](f7893addcd02c5916a6279c5f126297fae981618)) - (Lin Yang)
+- Complete plan 01 - foundation types and typed errors ([f402fe6](f402fe6acfb4e5b8ece4c903b597c0d1aafd2924)) - (Lin Yang)
+- Complete plan 03 - foundation hardening ([1542e6d](1542e6d054deff8f97a7a36595a3afde94bd1e97)) - (Lin Yang)
+- Complete plan 02 - foundation hardening ([bf7f383](bf7f38344054270ae7cedaada682ccdc58c8a76f)) - (Lin Yang)
+- Complete foundation hardening ([15c1170](15c117018a2e3e2c68bfe12d0354ae945f07d9dc)) - (Lin Yang)
+- Capture phase 2 observability context ([1f53f37](1f53f371b4e3cf8d8a1cdf0bc1bb28c6ad373bda)) - (Lin Yang)
+- Record phase 2 context session ([c9928a9](c9928a937ac80ed45a56f264a24ea65e173be9fa)) - (Lin Yang)
+- Research observability phase domain ([65a0edb](65a0edbd690df74b8026c5bdbea5a624768d4c63)) - (Lin Yang)
+- Add research and validation strategy ([05b65a3](05b65a319e226e6e0634f785ee02d365263506f1)) - (Lin Yang)
+- Create observability phase plan (3 plans) ([1b63e5e](1b63e5e1ef2044130b5d064ce776cc69df8fd0b1)) - (Lin Yang)
+- Complete 02-observability-01 plan ([87990b7](87990b7b257545abd2f76cfdc4aec8cee8542a5b)) - (Lin Yang)
+- Complete 02-observability-02 plan ([bc0fe0b](bc0fe0b4193022e13da69def362146becaed64fe)) - (Lin Yang)
+- Update roadmap progress for 02-observability-02 ([b61ba3e](b61ba3e1b3a6c297fb947a788265e476a9f6ddfe)) - (Lin Yang)
+- Complete observability phase ([ccb088d](ccb088d2c19c4a4d5d168271aa122b467a62eb68)) - (Lin Yang)
+- Complete observability phase verification ([3916d3b](3916d3b206f366f4e48031222821fbbcf019c263)) - (Lin Yang)
+- Sync GSD workflow artifacts from Phase 1 and Phase 2 ([783a325](783a325f7743c8c94a40922922b8eeaab6d1fa93)) - (Lin Yang)
+- Capture client struct refactor context ([2f39af0](2f39af0bf587ff056af82ae2bcfcd05077566a2d)) - (Lin Yang)
+- Record phase 3 context session ([9948291](9948291a98de8f23b4097ee83662b3a8be4d95e6)) - (Lin Yang)
+- Create phase plan ([e87f667](e87f6677117fee833dc6197199c7501bd81f7e70)) - (Lin Yang)
+- Create client struct refactor plans ([dab4d1f](dab4d1fd89af5cd22ad39f76f7b88eb5756f6672)) - (Lin Yang)
+- Complete client struct refactor plan ([1d93ddd](1d93ddd5bf4b7eb8f352379680c6a9f541e7d8dd)) - (Lin Yang)
+- Update Close/Disconnect interface docs per D-03 ([07d96a3](07d96a3e2449af40da03ca698a92f36c2ac3c6a3)) - (Lin Yang)
+- Complete 03-02 plan ([812bbd8](812bbd8d91770a6b7584f82e7e08460227b871b8)) - (Lin Yang)
+- Complete phase execution ([a1dc360](a1dc360af1a402153e52fecdfdadcfc8cc0297f1)) - (Lin Yang)
+- Evolve PROJECT.md after phase completion ([234f386](234f386794c65f6299a8e31a20913fa2c7c92000)) - (Lin Yang)
+- Capture phase 04 context ([92dc9ed](92dc9ed198c6713b9101211d3cfa1683ca96a678)) - (Lin Yang)
+- Record phase 04 context session ([970aaa2](970aaa2f8bb2d746701f83e34dbb82b981cdd172)) - (Lin Yang)
+- Create benchmarking and fuzz testing plans ([24bb026](24bb026b12417fe84c887303bf862409f23ff8fa)) - (Lin Yang)
+- Update Phase 04 progress and mark TEST-03 complete ([4dfd5d9](4dfd5d95ba8cdf8056878dbc204c3379389ac724)) - (Lin Yang)
+- Complete benchmarking and fuzz testing phase ([c9885a6](c9885a6b0c5f8dc7b389b8d3ca6e9600a329a193)) - (Lin Yang)
+- Complete benchmarking and fuzz testing plan ([3795e9a](3795e9a6833413fc46feac2eae0e47d1b17677f6)) - (Lin Yang)
+- Complete phase execution ([910966b](910966bbcab34cb36b46d9e2f403292feb4fb916)) - (Lin Yang)
+- Evolve PROJECT.md after phase completion ([11c365d](11c365da0d44153845955e04ac04e3104726a954)) - (Lin Yang)
+- Capture release infrastructure context ([03d0968](03d0968dd24f5b6ae86c7c0412a894d3116e454b)) - (Lin Yang)
+- Record phase 05 context session ([d7e7114](d7e711426748b5731db204373e6074ad28e1af43)) - (Lin Yang)
+- Add release infrastructure research ([0cc7b06](0cc7b06a23f620b3061949cc047aa0da34af2ff2)) - (Lin Yang)
+- Add research and validation artifacts ([7591900](7591900242850cbaf3caea24b08f77ca315570d5)) - (Lin Yang)
+- Create release infrastructure phase plan ([a6495ed](a6495edcd5432c488a98a2244a16282df71e88de)) - (Lin Yang)
+- Complete 05-01 plan - GoReleaser v2 configuration ([ee36b93](ee36b9369b83dceee962a9022f20e9789239039d)) - (Lin Yang)
+- Complete 05-03 plan - verify git-cliff configuration ([08f929e](08f929efde823034d707f1ed20438b91c7d39cd2)) - (Lin Yang)
+- Complete release infrastructure - goreleaser config, git-cliff verified, skip v1.0.1 tag (REL-02 partial) ([cd74799](cd74799525ece96e7d1e7e62636afa3b65ba2678)) - (Lin Yang)
+- Evolve PROJECT.md after release infrastructure completion ([e0a7060](e0a706003dcc9e4cdd6f7043fa7a524e59a29286)) - (Lin Yang)
+
+
+
+
+## v1.0.0(2026-03-22)
+
+
+
+
+### 🚀 Features
+
 - Add common types and error type hierarchy ([1396bbb](1396bbbde374deea6939e8ddcec9eecb1c4d3387)) - (Lin Yang)
 - Add Logger interface with context support ([d1d28ba](d1d28baf06bd832fe64f791e3a97518ce0076e5e)) - (Lin Yang)
 - Add auth module with CredentialsProvider and AuthHandler ([16a2b15](16a2b15c1d6310994adfbf94ea336aebf017947b)) - (Lin Yang)
