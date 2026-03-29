@@ -79,8 +79,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md -- TEST-01: L1 protocol benchmarks (pkg/protocol/bench_test.go), L2 EventManager benchmarks (pkg/managers/event_bench_test.go), L2 RequestManager benchmarks (pkg/managers/request_bench_test.go), fuzz round-trip assertions (pkg/protocol/fuzz_test.go), corpus files (testdata/fuzz/)
-- [ ] 04-02-PLAN.md -- TEST-03: Add benchstat CI job to .github/workflows/ci.yml with p<0.05 AND >10% regression threshold
+- [x] 04-01-PLAN.md -- TEST-01: L1 protocol benchmarks (pkg/protocol/bench_test.go), L2 EventManager benchmarks (pkg/managers/event_bench_test.go), L2 RequestManager benchmarks (pkg/managers/request_bench_test.go), fuzz round-trip assertions (pkg/protocol/fuzz_test.go), corpus files (testdata/fuzz/)
+- [x] 04-02-PLAN.md -- TEST-03: Add benchstat CI job to .github/workflows/ci.yml with p<0.05 AND >10% regression threshold
 
 ### Phase 5: Release Infrastructure
 
