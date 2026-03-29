@@ -401,30 +401,34 @@ type client struct {
 		connection *managers.ConnectionManager // WebSocket connection lifecycle
 		reconnect  *managers.ReconnectManager  // Automatic reconnection
 	}
-	// New fields for Phase 6.1
-	protocolNegotiator *connection.ProtocolNegotiator // Protocol version negotiation
-	policyManager      *connection.PolicyManager      // Server policy management
-	tickMonitor        *events.TickMonitor            // Heartbeat monitoring
-	gapDetector        *events.GapDetector            // Event sequence gap detection
-	serverInfo         *connection.HelloOk            // Server info from handshake
-	snapshot           *connection.Snapshot           // Server snapshot
-	tickHandlerUnsub   func()                         // Unsubscribe function for tick handler
-	// API namespaces
-	chatAPI          *api.ChatAPI
-	agentsAPI        *api.AgentsAPI
-	sessionsAPI      *api.SessionsAPI
-	configAPI        *api.ConfigAPI
-	cronAPI          *api.CronAPI
-	nodesAPI         *api.NodesAPI
-	skillsAPI        *api.SkillsAPI
-	devicePairingAPI *api.DevicePairingAPI
-	browserAPI       *api.BrowserAPI
-	channelsAPI      *api.ChannelsAPI
-	pushAPI          *api.PushAPI
-	execApprovalsAPI *api.ExecApprovalsAPI
-	systemAPI        *api.SystemAPI
-	secretsAPI       *api.SecretsAPI
-	usageAPI         *api.UsageAPI
+	protocol struct {
+		negotiator *connection.ProtocolNegotiator // Protocol version negotiation
+		policy     *connection.PolicyManager      // Server policy management
+		serverInfo *connection.HelloOk            // Server info from handshake
+		snapshot   *connection.Snapshot           // Server snapshot
+	}
+	health struct {
+		tickMonitor      *events.TickMonitor // Heartbeat monitoring
+		gapDetector      *events.GapDetector // Event sequence gap detection
+		tickHandlerUnsub func()              // Unsubscribe function for tick handler
+	}
+	api struct {
+		chat          *api.ChatAPI
+		agents        *api.AgentsAPI
+		sessions      *api.SessionsAPI
+		config        *api.ConfigAPI
+		cron          *api.CronAPI
+		nodes         *api.NodesAPI
+		skills        *api.SkillsAPI
+		devicePairing *api.DevicePairingAPI
+		browser       *api.BrowserAPI
+		channels      *api.ChannelsAPI
+		push          *api.PushAPI
+		execApprovals *api.ExecApprovalsAPI
+		system        *api.SystemAPI
+		secrets       *api.SecretsAPI
+		usage         *api.UsageAPI
+	}
 	// Internal state
 	requestFn api.RequestFn
 	ctx       context.Context    // Parent context for cancellation
@@ -467,28 +471,28 @@ func NewClient(opts ...ClientOption) (OpenClawClient, error) {
 	}, c.managers.event)
 
 	// Initialize protocol negotiator
-	c.protocolNegotiator = connection.NewProtocolNegotiator()
+	c.protocol.negotiator = connection.NewProtocolNegotiator()
 
 	// Initialize policy manager
-	c.policyManager = connection.NewPolicyManager()
+	c.protocol.policy = connection.NewPolicyManager()
 
 	// Initialize API namespaces
 	c.requestFn = c.newRequestFn()
-	c.chatAPI = api.NewChatAPI(c.requestFn)
-	c.agentsAPI = api.NewAgentsAPI(c.requestFn)
-	c.sessionsAPI = api.NewSessionsAPI(c.requestFn)
-	c.configAPI = api.NewConfigAPI(c.requestFn)
-	c.cronAPI = api.NewCronAPI(c.requestFn)
-	c.nodesAPI = api.NewNodesAPI(c.requestFn)
-	c.skillsAPI = api.NewSkillsAPI(c.requestFn)
-	c.devicePairingAPI = api.NewDevicePairingAPI(c.requestFn)
-	c.browserAPI = api.NewBrowserAPI(c.requestFn)
-	c.channelsAPI = api.NewChannelsAPI(c.requestFn)
-	c.pushAPI = api.NewPushAPI(c.requestFn)
-	c.execApprovalsAPI = api.NewExecApprovalsAPI(c.requestFn)
-	c.systemAPI = api.NewSystemAPI(c.requestFn)
-	c.secretsAPI = api.NewSecretsAPI(c.requestFn)
-	c.usageAPI = api.NewUsageAPI(c.requestFn)
+	c.api.chat = api.NewChatAPI(c.requestFn)
+	c.api.agents = api.NewAgentsAPI(c.requestFn)
+	c.api.sessions = api.NewSessionsAPI(c.requestFn)
+	c.api.config = api.NewConfigAPI(c.requestFn)
+	c.api.cron = api.NewCronAPI(c.requestFn)
+	c.api.nodes = api.NewNodesAPI(c.requestFn)
+	c.api.skills = api.NewSkillsAPI(c.requestFn)
+	c.api.devicePairing = api.NewDevicePairingAPI(c.requestFn)
+	c.api.browser = api.NewBrowserAPI(c.requestFn)
+	c.api.channels = api.NewChannelsAPI(c.requestFn)
+	c.api.push = api.NewPushAPI(c.requestFn)
+	c.api.execApprovals = api.NewExecApprovalsAPI(c.requestFn)
+	c.api.system = api.NewSystemAPI(c.requestFn)
+	c.api.secrets = api.NewSecretsAPI(c.requestFn)
+	c.api.usage = api.NewUsageAPI(c.requestFn)
 
 	if cfg.ReconnectEnabled {
 		reconnectConfig := cfg.ReconnectConfig
@@ -555,30 +559,30 @@ func (c *client) Connect(ctx context.Context) error {
 	if c.config.TickMonitor != nil {
 		tickIntervalMs := c.config.TickMonitor.TickIntervalMs
 		if tickIntervalMs == 0 {
-			tickIntervalMs = c.policyManager.GetTickIntervalMs()
+			tickIntervalMs = c.protocol.policy.GetTickIntervalMs()
 		}
 		staleMultiplier := c.config.TickMonitor.StaleMultiplier
 		if staleMultiplier == 0 {
 			staleMultiplier = 2
 		}
-		c.tickMonitor = events.NewTickMonitor(tickIntervalMs, staleMultiplier)
+		c.health.tickMonitor = events.NewTickMonitor(tickIntervalMs, staleMultiplier)
 		if c.config.TickMonitor.OnStale != nil {
-			c.tickMonitor.SetOnStale(c.config.TickMonitor.OnStale)
+			c.health.tickMonitor.SetOnStale(c.config.TickMonitor.OnStale)
 		}
 		if c.config.TickMonitor.OnRecovered != nil {
-			c.tickMonitor.SetOnRecovered(c.config.TickMonitor.OnRecovered)
+			c.health.tickMonitor.SetOnRecovered(c.config.TickMonitor.OnRecovered)
 		}
-		c.tickMonitor.Start()
+		c.health.tickMonitor.Start()
 
 		// Wire tick events to TickMonitor
-		c.tickHandlerUnsub = c.managers.event.Subscribe(EventTick, func(e Event) {
-			c.tickMonitor.RecordTick(e.Timestamp.UnixMilli())
+		c.health.tickHandlerUnsub = c.managers.event.Subscribe(EventTick, func(e Event) {
+			c.health.tickMonitor.RecordTick(e.Timestamp.UnixMilli())
 		})
 	}
 
 	// Initialize gap detector if configured
 	if c.config.GapDetector != nil {
-		c.gapDetector = events.NewGapDetector()
+		c.health.gapDetector = events.NewGapDetector()
 		// Note: GapDetector SetOnGap would be set here when enhanced
 	}
 
@@ -596,27 +600,27 @@ func (c *client) Disconnect() error {
 	}
 
 	// Clean up tick handler
-	if c.tickHandlerUnsub != nil {
-		c.tickHandlerUnsub()
-		c.tickHandlerUnsub = nil
+	if c.health.tickHandlerUnsub != nil {
+		c.health.tickHandlerUnsub()
+		c.health.tickHandlerUnsub = nil
 	}
 
 	// Stop tick monitor
-	if c.tickMonitor != nil {
-		c.tickMonitor.Stop()
+	if c.health.tickMonitor != nil {
+		c.health.tickMonitor.Stop()
 	}
 
 	// Reset gap detector
-	if c.gapDetector != nil {
-		c.gapDetector.Reset()
+	if c.health.gapDetector != nil {
+		c.health.gapDetector.Reset()
 	}
 
 	// Reset protocol negotiation
-	if c.protocolNegotiator != nil {
-		c.protocolNegotiator.Reset()
+	if c.protocol.negotiator != nil {
+		c.protocol.negotiator.Reset()
 	}
-	c.serverInfo = nil
-	c.snapshot = nil
+	c.protocol.serverInfo = nil
+	c.protocol.snapshot = nil
 
 	return c.managers.connection.Disconnect()
 }
@@ -665,7 +669,7 @@ func (c *client) SendRequest(ctx context.Context, req *protocol.RequestFrame, op
 		return nil, NewConnectionError("NOT_CONNECTED", "not connected", false, nil)
 	}
 	transport := c.managers.connection.Transport()
-	policyMgr := c.policyManager
+	policyMgr := c.protocol.policy
 	c.mu.Unlock()
 
 	// Validate payload size against server policy
@@ -713,106 +717,106 @@ func (c *client) Subscribe(eventType EventType, handler EventHandler) func() {
 
 // Chat returns the Chat API client.
 func (c *client) Chat() *api.ChatAPI {
-	return c.chatAPI
+	return c.api.chat
 }
 
 // Agents returns the Agents API client.
 func (c *client) Agents() *api.AgentsAPI {
-	return c.agentsAPI
+	return c.api.agents
 }
 
 // Sessions returns the Sessions API client.
 func (c *client) Sessions() *api.SessionsAPI {
-	return c.sessionsAPI
+	return c.api.sessions
 }
 
 // Config returns the Config API client.
 func (c *client) Config() *api.ConfigAPI {
-	return c.configAPI
+	return c.api.config
 }
 
 // Cron returns the Cron API client.
 func (c *client) Cron() *api.CronAPI {
-	return c.cronAPI
+	return c.api.cron
 }
 
 // Nodes returns the Nodes API client.
 func (c *client) Nodes() *api.NodesAPI {
-	return c.nodesAPI
+	return c.api.nodes
 }
 
 // Skills returns the Skills API client.
 func (c *client) Skills() *api.SkillsAPI {
-	return c.skillsAPI
+	return c.api.skills
 }
 
 // DevicePairing returns the DevicePairing API client.
 func (c *client) DevicePairing() *api.DevicePairingAPI {
-	return c.devicePairingAPI
+	return c.api.devicePairing
 }
 
 // Browser returns the Browser API client.
 func (c *client) Browser() *api.BrowserAPI {
-	return c.browserAPI
+	return c.api.browser
 }
 
 // Channels returns the Channels API client.
 func (c *client) Channels() *api.ChannelsAPI {
-	return c.channelsAPI
+	return c.api.channels
 }
 
 // Push returns the Push API client.
 func (c *client) Push() *api.PushAPI {
-	return c.pushAPI
+	return c.api.push
 }
 
 // ExecApprovals returns the ExecApprovals API client.
 func (c *client) ExecApprovals() *api.ExecApprovalsAPI {
-	return c.execApprovalsAPI
+	return c.api.execApprovals
 }
 
 // System returns the System API client.
 func (c *client) System() *api.SystemAPI {
-	return c.systemAPI
+	return c.api.system
 }
 
 // Secrets returns the Secrets API client.
 func (c *client) Secrets() *api.SecretsAPI {
-	return c.secretsAPI
+	return c.api.secrets
 }
 
 // Usage returns the Usage API client.
 func (c *client) Usage() *api.UsageAPI {
-	return c.usageAPI
+	return c.api.usage
 }
 
 // GetServerInfo returns the server info from the handshake.
 func (c *client) GetServerInfo() *connection.HelloOk {
-	return c.serverInfo
+	return c.protocol.serverInfo
 }
 
 // GetSnapshot returns the server snapshot.
 func (c *client) GetSnapshot() *connection.Snapshot {
-	return c.snapshot
+	return c.protocol.snapshot
 }
 
 // GetPolicy returns the server policy.
 func (c *client) GetPolicy() *connection.Policy {
-	if c.policyManager == nil {
+	if c.protocol.policy == nil {
 		return nil
 	}
-	policy := c.policyManager.GetPolicy()
+	policy := c.protocol.policy.GetPolicy()
 	return &policy
 }
 
 // GetTickMonitor returns the tick monitor instance.
 func (c *client) GetTickMonitor() *events.TickMonitor {
-	return c.tickMonitor
+	return c.health.tickMonitor
 }
 
 // GetGapDetector returns the gap detector instance.
 func (c *client) GetGapDetector() *events.GapDetector {
-	return c.gapDetector
+	return c.health.gapDetector
 }
 
 // GetMetrics returns a snapshot of connection health metrics (OBS-01).
@@ -825,18 +829,18 @@ func (c *client) GetMetrics() ConnectionMetrics {
 	var lastTickAge time.Duration
 	var isStale bool
 
-	if c.tickMonitor != nil {
+	if c.health.tickMonitor != nil {
 		// Latency = tickInterval * staleMultiplier (baseline estimate)
-		intervalMs := c.tickMonitor.GetTickIntervalMs()
-		multiplier := c.tickMonitor.GetStaleMultiplier()
+		intervalMs := c.health.tickMonitor.GetTickIntervalMs()
+		multiplier := c.health.tickMonitor.GetStaleMultiplier()
 		latency = time.Duration(intervalMs*int64(multiplier)) * time.Millisecond
 
 		// LastTickAge = actual time since last tick
-		lastTickAgeMs := c.tickMonitor.GetTimeSinceLastTick()
+		lastTickAgeMs := c.health.tickMonitor.GetTimeSinceLastTick()
 		lastTickAge = time.Duration(lastTickAgeMs) * time.Millisecond
 
 		// IsStale from monitor
-		isStale = c.tickMonitor.IsStale()
+		isStale = c.health.tickMonitor.IsStale()
 
 		// If stale, use LastTickAge as the latency estimate (overdue heartbeat)
 		if isStale && lastTickAge > latency {
@@ -940,25 +944,25 @@ func (c *client) processServerInfo() {
 		return
 	}
 
-	c.serverInfo = serverInfo
-	c.snapshot = &serverInfo.Snapshot
+	c.protocol.serverInfo = serverInfo
+	c.protocol.snapshot = &serverInfo.Snapshot
 
 	// Negotiate protocol version
-	if c.protocolNegotiator != nil {
-		_, err := c.protocolNegotiator.Negotiate(context.Background(), serverInfo)
+	if c.protocol.negotiator != nil {
+		_, err := c.protocol.negotiator.Negotiate(context.Background(), serverInfo)
 		if err != nil {
 			c.config.Logger.Error("protocol negotiation failed", "error", err)
 		}
 	}
 
 	// Set server policies
-	if c.policyManager != nil && serverInfo.Policy.MaxPayload > 0 {
-		c.policyManager.SetPolicies(serverInfo.Policy)
+	if c.protocol.policy != nil && serverInfo.Policy.MaxPayload > 0 {
+		c.protocol.policy.SetPolicies(serverInfo.Policy)
 	}
 
 	// Reset gap detector on new snapshot
-	if c.gapDetector != nil && c.snapshot != nil {
-		c.gapDetector.Reset()
+	if c.health.gapDetector != nil && c.protocol.snapshot != nil {
+		c.health.gapDetector.Reset()
 	}
 }
 
