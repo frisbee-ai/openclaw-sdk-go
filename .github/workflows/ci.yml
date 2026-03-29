@@ -64,3 +64,83 @@ jobs:
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: frisbee-ai/openclaw-sdk-go
+
+  benchmark:
+    name: Benchmark
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.24']
+      fail-fast: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - name: Install benchstat
+        run: go install golang.org/x/perf/cmd/benchstat@latest
+
+      - name: Run benchmarks
+        run: |
+          mkdir -p benchmark-results
+          go test -bench=. -benchmem -run=^$ -count=1 ./pkg/protocol/ ./pkg/managers/ 2>&1 | tee benchmark-results/bench.txt
+
+      - name: Download baseline (PR only)
+        if: github.event_name == 'pull_request'
+        uses: actions/download-artifact@v6
+        with:
+          name: benchmark-baseline
+          path: benchmark-results/
+          continue-on-error: true
+
+      - name: Compare benchmarks (PR only)
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -f benchmark-results/baseline.txt ] && [ -s benchmark-results/baseline.txt ]; then
+            STATS=$(benchstat benchmark-results/baseline.txt benchmark-results/bench.txt 2>&1) || true
+            echo "$STATS"
+            SUMMARY=$(echo "$STATS" | grep -E "^\S+\s+\d+" | tail -1)
+            if [ -n "$SUMMARY" ]; then
+              PVAL=$(echo "$SUMMARY" | grep -oE "p=[0-9.]+" | sed 's/p=//')
+              DELTA=$(echo "$SUMMARY" | grep -oE "[+-][0-9.]+%%" | tail -1 | tr -d '%')
+              if [ -n "$PVAL" ] && [ -n "$DELTA" ]; then
+                PVAL_NUM=$(echo "$PVAL" | awk '{if($1<0.001) print "0.001"; else print $1}')
+                DELTA_NUM=$(echo "$DELTA" | awk '{print ($1>0)?$1:-$1}')
+                REGRESSION=$(echo "$DELTA" | grep -c "^+" || echo "0")
+                if [ "$REGRESSION" = "1" ] && [ "$(echo "$PVAL_NUM < 0.05" | bc)" = "1" ] && [ "$(echo "$DELTA_NUM > 10" | bc)" = "1" ]; then
+                  echo "PERF_REGRESSION: p=$PVAL_NUM delta=$DELTA_NUM%"
+                  echo "Blocking merge: statistically significant regression > 10%"
+                  exit 1
+                fi
+              fi
+            fi
+            echo "No significant regression detected"
+          else
+            echo "No baseline found, skipping comparison"
+          fi
+
+      - name: Upload baseline (main branch only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          cp benchmark-results/bench.txt benchmark-results/baseline.txt
+
+      - name: Upload baseline artifact (main branch only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v6
+        with:
+          name: benchmark-baseline
+          path: benchmark-results/baseline.txt
+          retention-days: 30
+
+      - name: Upload results
+        uses: actions/upload-artifact@v6
+        with:
+          name: benchmark-results
+          path: benchmark-results/
+          retention-days: 30
