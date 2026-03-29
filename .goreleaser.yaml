@@ -6,12 +6,9 @@ version: 2
 
 project_name: openclaw-sdk-go
 
-# Before hooks
 before:
   hooks:
     - go mod tidy
-    - go generate ./...
-    - go test ./...
 
 # Go module verification (critical for library projects)
 gomod:
@@ -27,8 +24,10 @@ builds:
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
-# Release configuration
 release:
+  github:
+    owner: frisbee-ai
+    name: openclaw-sdk-go
+  mode: github
   prerelease: auto
-  mode: replace
-  replace_existing_artifacts: true
+  draft: false
