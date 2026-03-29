@@ -470,3 +470,47 @@ func TestGetMetrics_ThreadSafe(t *testing.T) {
 	wg.Wait()
 	// Should not race with -race
 }
+
+func TestWithEventBufferSize(t *testing.T) {
+	client, err := NewClient(WithEventBufferSize(200))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	defer func() {
+		_ = client.Close()
+	}()
+
+	if client.State() != StateDisconnected {
+		t.Errorf("expected StateDisconnected, got %v", client.State())
+	}
+}
+
+func TestWithEventBufferSize_DefaultIs100(t *testing.T) {
+	client, err := NewClient()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	defer func() {
+		_ = client.Close()
+	}()
+
+	if client.State() != StateDisconnected {
+		t.Errorf("expected StateDisconnected, got %v", client.State())
+	}
+}
+
+func TestWithEventBufferSize_VariousSizes(t *testing.T) {
+	sizes := []int{1, 10, 50, 100, 500, 1000}
+	for _, size := range sizes {
+		client, err := NewClient(WithEventBufferSize(size))
+		if err != nil {
+			t.Errorf("unexpected error for size %d: %v", size, err)
+			continue
+		}
+		if client == nil {
+			t.Errorf("expected non-nil client for size %d", size)
+			continue
+		}
+		_ = client.Close()
+	}
+}
