@@ -23,7 +23,7 @@
 ### API Stability (P2 — v1.x)
 
 - [x] **API-01**: Client struct refactor — Group oversized `client` struct into logical sub-structs (`core`, `protocol`, `health`, `api`)
-- [ ] **API-02**: Close/Disconnect disambiguation — Merge or clearly document `Close()` vs `Disconnect()` semantics in ConnectionManager
+- [x] **API-02**: Close/Disconnect disambiguation — Merge or clearly document `Close()` vs `Disconnect()` semantics in ConnectionManager
 
 ### Testing & Quality (P2 — v1.x)
 
@@ -86,7 +86,7 @@
 | OBS-03 | Phase 2 | Pending |
 | OBS-04 | Phase 2 | Pending |
 | API-01 | Phase 3 | Complete |
-| API-02 | Phase 3 | Pending |
+| API-02 | Phase 3 | Complete |
 | TEST-01 | Phase 4 | Pending |
 | TEST-02 | Phase 4 | Pending |
 | TEST-03 | Phase 4 | Pending |

@@ -8,7 +8,7 @@ OpenClaw SDK Go is a production-grade WebSocket client library migrated from Typ
 
 - [x] **Phase 1: Foundation Hardening** - Production-safe core with rate limiting, retry budgets, TLS CRL, pending request limits, and InsecureSkipVerify warning (completed 2026-03-28)
 - [ ] **Phase 2: Observability** - Connection health metrics, per-request timeouts, event priority levels, configurable event buffer
-- [ ] **Phase 3: Client Struct Refactor** - Group oversized client struct into logical sub-structs; clarify Close vs Disconnect
+- [x] **Phase 3: Client Struct Refactor** - Group oversized client struct into logical sub-structs; clarify Close vs Disconnect (completed 2026-03-29)
 - [ ] **Phase 4: Benchmarking and Fuzz Testing** - Hot-path benchmarks, fuzz test depth with corpus, benchstat CI integration
 - [ ] **Phase 5: Release Infrastructure** - GoReleaser library mode, semantic versioning tags, changelog automation
 
@@ -64,7 +64,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md -- API-01: Refactor client struct into managers/api/protocol/health sub-structs
-- [ ] 03-02-PLAN.md -- API-02: Update Close/Disconnect interface docs for clarity
+- [x] 03-02-PLAN.md -- API-02: Update Close/Disconnect interface docs for clarity
 
 ### Phase 4: Benchmarking and Fuzz Testing
 
@@ -99,6 +99,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation Hardening | 3/3 | Complete    | 2026-03-28 |
 | 2. Observability | 2/3 | In progress | - |
-| 3. Client Struct Refactor | 1/2 | In Progress|  |
+| 3. Client Struct Refactor | 2/2 | Complete   | 2026-03-29 |
 | 4. Benchmarking and Fuzz Testing | 0/3 | Not started | - |
 | 5. Release Infrastructure | 0/3 | Not started | - |
